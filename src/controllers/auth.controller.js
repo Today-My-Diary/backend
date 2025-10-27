@@ -56,4 +56,21 @@ export class AuthController {
             next(error);
         }
     }
+
+    // POST /api/auth/logout
+    async logout(req, res, next) {
+        try {
+            res.clearCookie('refreshToken', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                path: '/api/auth',
+            });
+
+            res.status(200).json({ message: '로그아웃에 성공했습니다.' });
+
+        } catch (error) {
+            next(error);
+        }
+    }
 }
