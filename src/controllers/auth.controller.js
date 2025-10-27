@@ -17,7 +17,7 @@ export class AuthController {
     async handleGoogleCallback(req, res, next) {
         const { code } = req.query;
         if (!code) {
-            return res.redirect(`${process.env.FRONTEND_URL}/login-failure?error=NO_CODE`);
+            return res.redirect(`${process.env.FRONTEND_URL}/login-failure`);
         }
 
         try {
@@ -53,7 +53,7 @@ export class AuthController {
             res.status(200).json({ accessToken });
 
         } catch (error) {
-            next(error);
+            return res.status(401).json({ message: error.message });
         }
     }
 
