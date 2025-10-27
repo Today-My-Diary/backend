@@ -8,9 +8,6 @@ import { errorHandler } from './middlewares/error-handler.middleware.js';
 
 const app = express();
 
-app.use(express.json());
-app.use(cookieParser());
-
 const corsOptions = {
     origin: process.env.FRONTEND_URL,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -18,6 +15,8 @@ const corsOptions = {
     credentials: true,
 }
 
+app.use(express.json());
+app.use(cookieParser());
 app.use(cors(corsOptions));
 
 app.use('/api/auth', authRouter);

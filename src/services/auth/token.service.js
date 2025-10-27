@@ -3,12 +3,12 @@ import jwt from 'jsonwebtoken';
 export class TokenService {
 
     generateAccessToken(user) {
-        const payload = { userId: user.userId };
+        const payload = { userId: user.userId.toString() };
         return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '20m' })
     }
 
     generateRefreshToken(user) {
-        const payload = { userId: user.userId };
+        const payload = { userId: user.userId.toString() };
         return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' })
     }
 

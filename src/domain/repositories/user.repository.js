@@ -21,8 +21,7 @@ export class UserRepository {
 
     async findById(userId) {
         return this.prisma.user.findUnique({
-            where: { userId: Number(userId) },
-            }
-        )
+            where: { userId: BigInt(userId) },
+        });
     }
 }
