@@ -13,4 +13,7 @@ router.get('/google/callback', authController.handleGoogleCallback.bind(authCont
 // POST /api/auth/reissue (AT 재발급)
 router.post('/reissue', authController.reissueAccessToken.bind(authController));
 
+// POST /api/auth/logout
+router.post('/logout', authController.logout.bind(authController));
+
 export default router;
