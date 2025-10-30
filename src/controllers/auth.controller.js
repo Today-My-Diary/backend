@@ -22,7 +22,7 @@ export class AuthController {
 
         try {
             // RefreshToken을 httpOnly 쿠키에 설정
-            const { refreshToken } = await this.authBusiness.handleGoogleLogin(code.toString());
+            const refreshToken = await this.authBusiness.handleGoogleLogin(code.toString());
             res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
@@ -48,8 +48,7 @@ export class AuthController {
                 return res.status(401).json({ message: '리프레시 토큰이 없습니다.' });
             }
 
-            const { accessToken } = await this.authBusiness.reissueAccessToken(refreshToken);
-
+            const accessToken = await this.authBusiness.reissueAccessToken(refreshToken);
             res.status(200).json({ accessToken });
 
         } catch (error) {
@@ -58,7 +57,7 @@ export class AuthController {
     }
 
     // POST /api/auth/logout
-    async logout(req, res, next) {
+    logout(req, res, next) {
         try {
             res.clearCookie('refreshToken', {
                 httpOnly: true,
