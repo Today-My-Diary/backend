@@ -15,9 +15,7 @@ export class AuthBusiness {
         const googleProfile = await this.authService.getGoogleProfile(googleTokens.access_token);
 
         const user = await this.userService.findOrCreateUserByGoogle(googleProfile);
-        const refreshToken = this.tokenService.generateRefreshToken(user);
-
-        return { refreshToken };
+        return this.tokenService.generateRefreshToken(user);
     }
 
     async reissueAccessToken(refreshToken) {
@@ -27,8 +25,6 @@ export class AuthBusiness {
         }
 
         const user = await this.userService.findUserById(payload.userId);
-
-        const accessToken = this.tokenService.generateAccessToken(user);
-        return { accessToken };
+        return this.tokenService.generateAccessToken(user);
     }
 }
