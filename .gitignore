@@ -1,0 +1,23 @@
+# JetBrains IDE (WebStorm)
+/.idea
+
+# Node.js dependencies
+/node_modules
+
+# Environment variables (보안 - 매우 중요!)
+.env
+.env.*
+!.env.example
+
+# Prisma
+# (schema.prisma는 추적하지만, 로컬 DB 파일은 무시)
+*.db
+*.db-journal
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
