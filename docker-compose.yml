@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # RabbitMQ 서비스
+  harufilm-rabbitmq:
+    # 'management' 태그가 관리자 UI 페이지를 포함합니다.
+    image: rabbitmq:3-management-alpine
+    container_name: 'harufilm-rabbitmq'
+    ports:
+      # 5672: 서버(API, Encoding)가 접속하는 AMQP 프로토콜 포트
+      - '5672:5672'
+      # 15672: 관리자 웹 UI 포트 (http://localhost:15672)
+      - '15672:15672'
+    networks:
+      - harufilm_network
+
+  # API 서버
+  harufilm-api-server:
+    build:
+      context: ./api-server
+    container_name: 'harufilm-api-server'
+    ports:
+      - '3000:3000'
+    depends_on:
+      - harufilm-rabbitmq
+    networks:
+      - harufilm_network
+    env_file:
+      - ./api-server/.env
+
+  # encoding 서버
+  harufilm-encoding-server:
+    build:
+      context: ./encoding-server
+    container_name: 'harufilm-encoding-server'
+    depends_on:
+      - harufilm-rabbitmq
+    networks:
+      - harufilm_network
+    env_file:
+      - ./encoding-server/.env
+
+networks:
+  harufilm_network:
+    driver: bridge
