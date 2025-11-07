@@ -29,4 +29,14 @@ export class TokenService {
             return null;
         }
     }
+
+    getUserId(token) {
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            return decoded.userId;
+        } catch (error) {
+            console.error('Access Token: userId 추출 실패', error);
+            return null;
+        }
+    }
 }
