@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 # 작업 디렉토리 설정
 WORKDIR /app
@@ -14,7 +14,7 @@ COPY . .
 RUN npx prisma generate
 
 # Production Stage
-FROM node:20-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
