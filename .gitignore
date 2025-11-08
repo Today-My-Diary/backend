@@ -1,23 +1,27 @@
-# JetBrains IDE (WebStorm)
-/.idea
+.idea/
 
-# Node.js dependencies
 /node_modules
+api-server/node_modules
+encoding-server/node_modules
 
-# Environment variables (보안 - 매우 중요!)
+dist/
+api-server/dist
+encoding-server/dist
+
 .env
+api-server/.env
+encoding-server/.env
 .env.*
 !.env.example
+!.env.test
 
-# Prisma
-# (schema.prisma는 추적하지만, 로컬 DB 파일은 무시)
 *.db
 *.db-journal
 
-# OS generated files
 .DS_Store
 Thumbs.db
 
-# Logs
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
