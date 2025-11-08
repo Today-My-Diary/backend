@@ -9,7 +9,7 @@ import {VideoRepository } from './domain/repositories/video.repository.js'
 import { AuthService } from './services/auth/auth.service.js';
 import { TokenService } from './services/auth/token.service.js';
 import { UserService } from './services/user/user.service.js';
-import { UploadService } from './services/s3/upload.service.js';
+import { UploadService } from './services/video/upload.service.js';
 
 // Business
 import { AuthBusiness } from './business/auth.business.js';
