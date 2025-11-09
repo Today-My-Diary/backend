@@ -39,3 +39,12 @@ model Timestamp {
   video         Video    @relation(fields: [videoId], references: [videoId])
   videoId       BigInt
 }
+
+model EncodingJob {
+  jobId   BigInt    @id @default(autoincrement())
+  userId  BigInt
+  inputKey String
+  outputKey String
+  status String
+  createdAt DateTime  @default(now())
+}

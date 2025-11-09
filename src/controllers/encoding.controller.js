@@ -22,7 +22,11 @@ export class EncodingController {
 
             res.status(200).json({
                 success: true,
-                data: result,
+                data: JSON.parse(
+                    JSON.stringify(result, (_, value) =>
+                        typeof value === "bigint" ? value.toString() : value
+                    )
+                ),
             });
         }catch(error){
             console.log(error);

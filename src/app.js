@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 
 import authRouter from './routes/auth.router.js';
+import encodingRouter from './routes/encoding.router.js';
 import { errorHandler } from './middlewares/error-handler.middleware.js';
 
 const app = express();
@@ -20,6 +21,7 @@ app.use(cookieParser());
 app.use(cors(corsOptions));
 
 app.use('/api/auth', authRouter);
+app.use('/api/encoding', encodingRouter);
 
 app.use(errorHandler);
 
