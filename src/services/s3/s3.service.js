@@ -1,10 +1,7 @@
 import {
   S3Client,
   PutObjectCommand,
-  GetObjectCommand,
-  DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
-import AWS from "aws-sdk";
 import fs from "fs";
 import dotenv from "dotenv"
 
@@ -19,7 +16,7 @@ export class S3Service {
                 secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
             },
         });
-        this.bucketName = process.env.AWS_S3_BUCKET_NAME;
+        this.bucketName = process.env.S3_BUCKET_NAME;
     }
 
     async uploadVideo(filePath, key) {

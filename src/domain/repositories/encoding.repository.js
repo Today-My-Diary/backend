@@ -1,4 +1,4 @@
-export class EncodlingRepository {
+export class EncodingRepository {
 
     constructor(prismaClient) {
         this.prisma = prismaClient;
@@ -17,14 +17,14 @@ export class EncodlingRepository {
 
     async updateJobStatus({ jobId, status }){
         return this.prisma.encodingJob.update({
-            where: { jobId: jobId },
+            where: { jobId: BigInt(jobId) },
             data: {status},
         });
     }
 
     async findJobById({ jobId }) {
         return this.prisma.encodingJob.findUnique({
-            where: { jobId: BigInd(jobId) },
+            where: { jobId: BigInt(jobId) },
         });
     }
 }
