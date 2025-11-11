@@ -1,48 +1,51 @@
 import {
-  S3Client,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import fs from "fs";
-import dotenv from "dotenv"
-
-dotenv.config();
+import https from "https";
 
 export class S3Service {
-    constructor() {
-        this.s3 = new S3Client({
-            region: process.env.AWS_REGION,
-            credentials: {
-                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-            },
+    constructor(s3Client) {
+        this.s3Client = s3Client;
+    }
+
+    async downloadFromUrl(inputUrl, tempPath) {
+        return new Promise((resolve, reject) => {
+            const file = fs.createWriteStream(tempPath);
+            https.get(inputUrl, (response) => {
+                    if(response.statusCode !== 200) {
+                        reject(new Error(`HTTP ${response.statusCode}`));
+                        return;
+                    }
+                    response.pipe(file);
+                    file.on("finish", () => {
+                        file.close(() => resolve(tempPath));
+                    });
+            }).on("error", (err) => {
+                fs.unlinkSync(tempPath);
+                console.log("downloadFromUrl error", error);
+                reject(err);
+            });
         });
-        this.bucketName = process.env.S3_BUCKET_NAME;
+    }
+
+    async createS3Key(userId, filename){
+        return `users/${userId}/videos/${Date.now()}_${filename}`;
+    }
+
+    async createInputKey(inputPath) {
+        return inputPath.split(".amazonaws.com/")[1]?.split("?")[0] || "unknown";
     }
 
     async uploadVideo(filePath, key) {
-        try {
-            if(!fs.existsSync(filePath)){
-                throw new Error("파일이 존재하지 않음");
-            }
+        const fileStream = fs.createReadStream(filePath);
+        const command = new PutObjectCommand({
+            Bucket: process.env.S3_BUCKET_NAME,
+            Key: key,
+            Body: fileStream,
+        });
 
-            const fileStream = fs.createReadStream(filePath);
-
-            const command = new PutObjectCommand({
-                Bucket: this.bucketName,
-                Key: key,
-                Body: fileStream,
-                ContentType: "video/mp4",
-            });
-            await this.s3.send(command);
-            
-            const fileUrl = `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
-            console.log(fileUrl);
-           
-            return fileUrl;
-        }
-        catch (err){
-            console.log(err.message);
-            throw err;
-        }
+       await this.s3Client.send(command);
+       return `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
     }
 }

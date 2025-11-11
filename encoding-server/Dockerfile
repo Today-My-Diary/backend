@@ -1,4 +1,3 @@
-# TODO
 #stage 1: Builder
 FROM node:24-alpine AS builder
 

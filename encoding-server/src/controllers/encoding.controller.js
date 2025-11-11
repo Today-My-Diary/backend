@@ -1,3 +1,7 @@
+import path from "path";
+import os from "os";
+import fs from "fs";
+
 export class EncodingController {
     constructor(encodingBusiness){
         this.encodingBusiness = encodingBusiness;
@@ -7,6 +11,10 @@ export class EncodingController {
         try{
             const { inputUrl, outputDir, filename } = req.body;
             const userId = req.user?.userId;
+            const baseTempDir = path.join(os.tmpdir(), "encoding");
+            const userDir = path.join(baseTempDir, userId.toString());
+            fs.mkdirSync(userDir, { recursive: true });
+
             if(!inputUrl || !outputDir || !filename) {
                 return res.status(400).json({
                     success: false,
@@ -16,7 +24,7 @@ export class EncodingController {
 
             const result = await this.encodingBusiness.handleEncoding({
                 inputUrl,
-                outputDir,
+                outputDir: path.join(baseTempDir, userId.toString()),
                 filename,
                 userId,
             });

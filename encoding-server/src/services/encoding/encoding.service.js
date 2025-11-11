@@ -1,65 +1,57 @@
-//FFmpeg 로직 + 인코딩 실행
-
-import { exec } from "child_process";
-import { promisify } from "util";
+import { spawn } from "child_process";
 import { ffmpegConfig } from "./ffmpeg.config.js";
-import path from 'path';
-import fs from 'fs';
-import https from "https";
-
-const execAsync = promisify(exec);
+import path from "path";
 
 export class EncodingService {
-    constructor(s3Service){
-        this.s3Service = s3Service;
-    }
-
-    async downloadFromS3Url(inputUrl, tempPath) {
-        return new Promise((resolve, reject) => {
-            const file = fs.createWriteStream(tempPath);
-            https.get(inputUrl, (response) => {
-                if(response.statusCode !== 200) {
-                    reject(new Error(`${response.statusCode}`));
-                    return;
-                }
-                response.pipe(file);
-                file.on("finish", () => {
-                    file.close(() => {
-                        console.log(`download done -> ${tempPath}`);
-                        resolve(tempPath);
-                    });
-                });
-            }).on("error", (err) => {
-                fs.unlinkSync(tempPath);
-                reject(err);
-            });
-        });
-    }
 
     async transcodeVideo(inputPath, outputDir, filename){
         if(!inputPath || !outputDir || !filename) {
             throw new Error("inputPath, outputDir, filename이 없음");
         }
         
-        const outputPath = path.resolve(outputDir, filename);
-        const command = `ffmpeg -i "${inputPath}" -c:v ${ffmpegConfig.videoCodec} -preset ${ffmpegConfig.preset} -crf ${ffmpegConfig.crf} -y "${outputPath}"`;
+        try{
+            const baseName = path.basename(filename);
 
-        console.log(command);
+            const safeNameRegex = /^[A-Za-z0-9._-]{1,255}$/;
+            if(!safeNameRegex.test(baseName)) {
+                throw new Error("파일 이름에 허용되지 않는 문자가 있거나 길이가 초과됨");
+            }
 
-        const{ stdout, stderr } = await execAsync(command);
-        console.log(stdout || stderr);
+            const outputPath = path.resolve(outputDir, baseName);
+            const args = ["-i", inputPath, "-c:v", ffmpegConfig.videoCodec, "-preset", ffmpegConfig.preset, "-crf", String(ffmpegConfig.crf), "-y", outputPath];
 
-        return outputPath;
-    }
+            return await new Promise((resolve, reject) => {
+                const ff = spawn("ffmpeg", args, {stdio: ["ignore", "pipe", "pipe"]});
 
-    async s3Upload(filePath, s3Key){
-        if(!filePath || !s3Key) {
-            throw new Error("filePath나 s3Key가 없음.");
+                let stdout = "";
+                let stderr = "";
+
+                ff.stdout.on("data", (chunk) => {
+                    stdout += chunk.toString();
+                });
+
+                ff.stderr.on("data", (chunk) => {
+                    stderr += chunk.toString();
+                });
+
+                ff.on("error", (err) =>{
+                    reject(new Error(`ffmpeg spawn error: ${err.message}`));
+                });
+
+                ff.on("close", (code, signal) => {
+                    if(code===0){
+                        resolve(outputPath);
+                    }
+                    else{
+                        const msg = `ffmpeg exited with code ${code}${signal ? `, signal ${signal}` : ""}. stderr: ${stderr}`;
+                    }
+                })
+            })
+
+
+        } catch(error){
+            console.log("transcodeVideo", error);
+            throw error;
         }
-
-        const s3Url = await this.s3Service.uploadVideo(filePath, s3Key);
-        console.log(s3Url);
-
-        return s3Url;
     }
 }
