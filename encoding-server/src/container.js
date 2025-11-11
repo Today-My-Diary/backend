@@ -1,7 +1,7 @@
-import { prisma } from './db/prisma-client.js';
+import dotenv from 'dotenv';
+import { S3Client } from '@aws-sdk/client-s3';
 
 // Domain (Repositories)
-import { EncodingRepository } from './domain/repositories/encoding.repository.js';
 
 // Services
 import { EncodingService } from './services/encoding/encoding.service.js';
@@ -14,21 +14,26 @@ import { EncodingBusiness } from './business/encoding.business.js';
 // Controllers
 import { EncodingController } from './controllers/encoding.controller.js';
 
+dotenv.config();
+
+const s3Client = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    }
+});
+
 // 의존성 조립 (Bottom-Up)
 
 // Repositories
-const encodingRepository = new EncodingRepository(prisma);
 
 // Services
-export const s3Service = new S3Service();
-const encodingService = new EncodingService(s3Service, ffmpegConfig);
+export const s3Service = new S3Service(s3Client);
+const encodingService = new EncodingService(ffmpegConfig);
 
 // Business
-const encodingBusiness = new EncodingBusiness(
-    encodingService,
-    s3Service,
-    encodingRepository
-);
+const encodingBusiness = new EncodingBusiness(encodingService, s3Service);
 
 // Controllers
 export const encodingController = new EncodingController(encodingBusiness);

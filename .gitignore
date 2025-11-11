@@ -25,3 +25,7 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+encoding-server/output
+encoding-server/controllers/health.controller.js
+encoding-server/routes/health.router.js
