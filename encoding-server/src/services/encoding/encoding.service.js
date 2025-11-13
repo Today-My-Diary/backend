@@ -1,8 +1,32 @@
 import { spawn } from "child_process";
 import { ffmpegConfig } from "./ffmpeg.config.js";
 import path from "path";
+import os from "os";
+import fs from "fs";
 
 export class EncodingService {
+    async preparePaths(outputDir, filename) {
+        const baseName = path.basename(filename);
+        const safeNameRegex = /^[A-Za-z0-9._-]{1,255}$/;
+
+        if(!safeNameRegex.test(baseName)) {
+            throw new Error("파일 이름에 허용되지 않는 문자가 있거나 길이가 초과됨");
+        }
+
+        const tempInputPath = path.join(outputDir, `temp_${Date.now()}_${baseName}`);
+        const outputPath = path.resolve(outputDir, baseName);
+
+        return { tempInputPath, outputPath };
+    }
+
+    async prepareWorkspace(userId){
+        const baseTempDir = path.join(os.tmpdir(), "encoding");
+        const userDir = path.join(baseTempDir, userId.toString());
+
+        await fs.promises.mkdir(userDir, { recursive: true });
+
+        return userDir;
+    }
 
     async transcodeVideo(inputPath, outputDir, filename){
         if(!inputPath || !outputDir || !filename) {

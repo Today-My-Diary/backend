@@ -1,12 +1,13 @@
-import {
-  PutObjectCommand,
-} from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import fs from "fs";
 import https from "https";
 
 export class S3Service {
-    constructor(s3Client) {
+    constructor(s3Client, bucket, region) {
         this.s3Client = s3Client;
+        this.bucket = bucket;
+        this.region = region;
+
     }
 
     async downloadFromUrl(inputUrl, tempPath) {
@@ -29,23 +30,40 @@ export class S3Service {
         });
     }
 
-    async createS3Key(userId, filename){
+    createS3Key(userId, filename){
         return `users/${userId}/videos/${Date.now()}_${filename}`;
     }
 
-    async createInputKey(inputPath) {
+    createInputKey(inputPath) {
         return inputPath.split(".amazonaws.com/")[1]?.split("?")[0] || "unknown";
     }
 
     async uploadVideo(filePath, key) {
         const fileStream = fs.createReadStream(filePath);
         const command = new PutObjectCommand({
-            Bucket: process.env.S3_BUCKET_NAME,
+            Bucket: this.bucket,
             Key: key,
             Body: fileStream,
         });
 
        await this.s3Client.send(command);
-       return `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+       return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
+    }
+
+    async uploadAndBuildResponse({ encodingResult, inputUrl, filename, userId }) {
+        const videoKey = this.createS3Key(userId, filename);
+        const inputKey = this.createInputKey(inputUrl);
+
+        await this.uploadVideo(encodingResult, videoKey);
+
+        const s3Url = `https://${this.bucket}.s3.${this.region}.amazonaws.com/${videoKey}`;
+
+        return {
+            success: true,
+            userId,
+            inputKey,
+            s3Key: videoKey,
+            s3Url
+        };  
     }
 }
