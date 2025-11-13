@@ -10,10 +10,8 @@ export class EncodingController {
     async handleEncodingVideo(req, res, next) {
         try{
             const { inputUrl, outputDir, filename } = req.body;
-            const userId = req.user?.userId;
-            const baseTempDir = path.join(os.tmpdir(), "encoding");
-            const userDir = path.join(baseTempDir, userId.toString());
-            fs.mkdirSync(userDir, { recursive: true });
+            const userId = req.auth.userId;
+            console.log("req.auth: ", req.auth);
 
             if(!inputUrl || !outputDir || !filename) {
                 return res.status(400).json({
@@ -24,7 +22,6 @@ export class EncodingController {
 
             const result = await this.encodingBusiness.handleEncoding({
                 inputUrl,
-                outputDir: path.join(baseTempDir, userId.toString()),
                 filename,
                 userId,
             });

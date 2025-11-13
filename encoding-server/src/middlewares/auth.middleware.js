@@ -1,6 +1,4 @@
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-dotenv.config();
 
 export const authMiddleware = (req, res, next) => {
     try{
@@ -14,9 +12,9 @@ export const authMiddleware = (req, res, next) => {
             return res.status(401).json({ message: "Token missing "});
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        req.user = decoded;
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        console.log("decoded payload: ", payload);
+        req.auth = payload;
         next();
     } catch(error){
         console.log("JWT 검증 실패", error.message);
