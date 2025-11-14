@@ -1,4 +1,3 @@
-import fs from "fs";
 import path from "path";
 
 export class EncodingBusiness {
@@ -16,16 +15,9 @@ export class EncodingBusiness {
 
             const encodingResult = await this.encodingService.transcodeVideo(tempInputPath, outputDir, filename);
 
-            const s3Key = await this.s3Service.createS3Key(userId, filename);
-            //const s3Url = await this.s3Service.uploadVideo(encodingResult, s3Key);
-            //const inputKey = await this.s3Service.createInputKey(inputUrl);
-
             return await this.s3Service.uploadAndBuildResponse({encodingResult, inputUrl, filename, userId});
         } finally {
-            await Promise.allSettled([
-                fs.promises.unlink(tempInputPath).catch(() => {}),
-                fs.promises.unlink(outputPath).catch(() => {}),
-            ]);
+            await this.encodingService.cleanupWorkspace(outputDir);
         }
     }
 }

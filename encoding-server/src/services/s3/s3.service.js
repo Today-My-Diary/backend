@@ -23,8 +23,8 @@ export class S3Service {
                         file.close(() => resolve(tempPath));
                     });
             }).on("error", (err) => {
-                fs.unlinkSync(tempPath);
-                console.log("downloadFromUrl error", error);
+                fs.promises.unlink(tempPath);
+                console.log("downloadFromUrl error", err);
                 reject(err);
             });
         });
