@@ -32,50 +32,48 @@ export class EncodingService {
         if(!inputPath || !outputDir || !filename) {
             throw new Error("inputPath, outputDir, filename이 없음");
         }
-        
+
+        const baseName = path.basename(filename);
+
+        const safeNameRegex = /^[A-Za-z0-9._-]{1,255}$/;
+        if(!safeNameRegex.test(baseName)) {
+            throw new Error("파일 이름에 허용되지 않는 문자가 있거나 길이가 초과됨");
+        }
+
+        const outputPath = path.resolve(outputDir, baseName);
+        const args = ["-i", inputPath, "-c:v", ffmpegConfig.videoCodec, "-preset", ffmpegConfig.preset, "-crf", String(ffmpegConfig.crf), "-y", outputPath];
+
+        return await new Promise((resolve, reject) => {
+            const ff = spawn("ffmpeg", args, {stdio: ["ignore", "pipe", "pipe"]});
+
+            let stderr = "";
+
+            ff.stderr.on("data", (chunk) => {
+                stderr += chunk.toString();
+            });
+
+            ff.on("error", (err) =>{
+                reject(new Error(`ffmpeg spawn error: ${err.message}`));
+            });
+
+            ff.on("close", (code, signal) => {
+                if(code===0){
+                    resolve(outputPath);
+                }
+                else{
+                    const msg = `ffmpeg exited with code ${code}${signal ? `, signal ${signal}` : ""}. stderr: ${stderr}`;
+                    reject(new Error(msg));
+                }
+            });
+        });
+    }
+
+    async cleanupWorkspace(outputDir){
         try{
-            const baseName = path.basename(filename);
-
-            const safeNameRegex = /^[A-Za-z0-9._-]{1,255}$/;
-            if(!safeNameRegex.test(baseName)) {
-                throw new Error("파일 이름에 허용되지 않는 문자가 있거나 길이가 초과됨");
-            }
-
-            const outputPath = path.resolve(outputDir, baseName);
-            const args = ["-i", inputPath, "-c:v", ffmpegConfig.videoCodec, "-preset", ffmpegConfig.preset, "-crf", String(ffmpegConfig.crf), "-y", outputPath];
-
-            return await new Promise((resolve, reject) => {
-                const ff = spawn("ffmpeg", args, {stdio: ["ignore", "pipe", "pipe"]});
-
-                let stdout = "";
-                let stderr = "";
-
-                ff.stdout.on("data", (chunk) => {
-                    stdout += chunk.toString();
-                });
-
-                ff.stderr.on("data", (chunk) => {
-                    stderr += chunk.toString();
-                });
-
-                ff.on("error", (err) =>{
-                    reject(new Error(`ffmpeg spawn error: ${err.message}`));
-                });
-
-                ff.on("close", (code, signal) => {
-                    if(code===0){
-                        resolve(outputPath);
-                    }
-                    else{
-                        const msg = `ffmpeg exited with code ${code}${signal ? `, signal ${signal}` : ""}. stderr: ${stderr}`;
-                    }
-                })
-            })
-
-
-        } catch(error){
-            console.log("transcodeVideo", error);
-            throw error;
+            await fs.rm(outputDir, { recursive: true, force: true });
+        }
+        catch(err){
+            console.log("cleanupWorkspace error: ", err.message);
         }
     }
 }
