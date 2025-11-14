@@ -1,23 +1,31 @@
-import path from "path";
-
 export class EncodingBusiness {
-    constructor(encodingService, s3Service) {
+    constructor(encodingService, s3Service, apiClient) {
         this.encodingService = encodingService;
         this.s3Service = s3Service;
+        this.apiClient = apiClient;
     }
 
     async handleEncoding ({inputUrl, filename, userId}) {
-        const outputDir = await this.encodingService.prepareWorkspace(userId);
-        const { tempInputPath, outputPath } = await this.encodingService.preparePaths(outputDir, filename);
+        const { workspace, jobId } = await this.encodingService.prepareWorkspace(userId);
+        const paths = this.encodingService.getHlsPaths(workspace);
 
         try{
-            await this.s3Service.downloadFromUrl(inputUrl, tempInputPath);
+            await this.s3Service.downloadFromUrl(inputUrl, paths.input);
 
-            const encodingResult = await this.encodingService.transcodeVideo(tempInputPath, outputDir, filename);
+            await this.encodingService.transcodeHls(paths.input, paths);
 
-            return await this.s3Service.uploadAndBuildResponse({encodingResult, inputUrl, filename, userId});
+            await this.encodingService.generateMasterPlaylist(paths);
+
+            const uploadResult = await this.s3Service.uploadHlsAndBuildResponse({workspace, userId, jobId});
+
+            const { videoKey, hlsUrl } = uploadResult;
+
+            await this.apiClient.notifyEncodingComplete({userId, videoKey, hlsUrl});
+
+            return uploadResult;
+            
         } finally {
-            await this.encodingService.cleanupWorkspace(outputDir);
+            await this.encodingService.cleanupWorkspace(workspace);
         }
     }
 }

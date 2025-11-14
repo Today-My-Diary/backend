@@ -68,7 +68,7 @@ export class EncodingService {
         for(const res of Object.keys(hlsProfiles)) {
             const profile = hlsProfiles[res];
 
-            const outputDir = paths[`out${res}`];
+            const outputDir = paths[`out_${res}`];
             const segmentPath = `${outputDir}/segment_%03d.ts`;
             const playlistPath = `${outputDir}/index.m3u8`;
 
