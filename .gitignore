@@ -29,3 +29,7 @@ yarn-error.log*
 encoding-server/output
 encoding-server/controllers/health.controller.js
 encoding-server/routes/health.router.js
+
+/tmp
+/**/*.ts
+/**/*.m3u8
