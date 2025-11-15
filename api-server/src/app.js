@@ -5,6 +5,7 @@ import cors from 'cors';
 
 import authRouter from './routes/auth.router.js';
 import uploadRouter from './routes/upload.router.js';
+import videoRouter from "./routes/video.router.js";
 import { errorHandler } from './middlewares/error-handler.middleware.js';
 
 const app = express();
@@ -22,6 +23,7 @@ app.use(cors(corsOptions));
 
 app.use('/api/auth', authRouter);
 app.use('/api/uploads', uploadRouter);
+app.use('/api/videos', videoRouter)
 
 app.use(errorHandler);
 
