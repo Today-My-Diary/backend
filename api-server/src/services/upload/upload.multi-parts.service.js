@@ -23,20 +23,21 @@ export class UploadMultiPartsService {
             videoS3Url = await this.s3Service.callMultiPartsCompleteUpload(userId, uploadId, parts, uploadDate);
 
             // URL과 타임스탬프 정보를 DB에 저장
-            await this.videoRepository.create({
-                data: {
-                    userId: userId,
-                    createdAt: new Date(uploadDate),
-                    s3Key: videoS3Key,
-                    s3Url: videoS3Url,
-                    timestamps: {
-                        create: timestamps
-                    }
-                },
-                include: {
-                    timestamps: true,
+            const dataToUpsert = {
+                s3Key: videoS3Key,
+                s3Url: videoS3Url,
+                timestamps: {
+                    create: timestamps
                 }
-            });
+            };
+
+            // (userId, uploadDate)는 where 조건으로, dataToUpsert는 저장할 데이터로 전달
+            await this.videoRepository.upsertByDate(
+                userId,
+                uploadDate,
+                dataToUpsert
+            );
+
             console.log(`비디오 업로드 성공: ${videoS3Key}`);
         } catch (error) {
             // --- 롤백(Rollback) ---

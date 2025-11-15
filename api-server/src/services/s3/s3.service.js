@@ -79,9 +79,19 @@ export class S3Service {
         return `videos/${userId}/${uploadDate}`;
     }
 
-    // 썸네일 전용 S3 Key 생성 (예: thumbnails/123/2025-11-07)
+    // 썸네일 전용 S3 Key 생성 (예: "thumbnails/123/2025-11-07")
     generateThumbnailS3Key = (userId, uploadDate) => {
         return `thumbnails/${userId}/${uploadDate}`;
+    }
+
+    getS3Url = async (s3Key) => {
+        try {
+            const region = await this.s3Client.config.region();
+            return `https://${this.s3BucketName}.s3.${region}.amazonaws.com/${s3Key}`;
+        } catch (error) {
+            console.error("S3 리전 정보를 가져오거나 URL을 생성하는 데 실패했습니다.", error);
+            throw new Error("S3 URL을 생성할 수 없습니다.");
+        }
     }
 
     _createMultiPartsInitiateCommand = (userId, uploadDate) => {

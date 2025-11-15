@@ -18,9 +18,9 @@ model User {
 
 model Video {
   videoId     BigInt     @id @default(autoincrement())
-  s3Key       String     @unique
-  s3Url       String
-  createdAt   DateTime   @default(now())
+  s3Key       String?     @unique
+  s3Url       String?
+  uploadDate  String
 
   // Thumbnail
   thumbnailS3Key String?    @unique
@@ -32,6 +32,9 @@ model Video {
 
   // Timestamp-Video N:1
   timestamps Timestamp[]
+
+  // 사용자당 하루 1개 규칙
+  @@unique([userId, uploadDate])
 }
 
 model Timestamp {
