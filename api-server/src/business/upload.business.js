@@ -1,22 +1,18 @@
 export class UploadBusiness {
 
     constructor(tokenService, uploadService) {
-        this.tokenService = tokenService;
         this.uploadService = uploadService;
     }
 
-    initiateMultipartUpload = async (token, uploadDate) => {
-        const userId = this.tokenService.getUserId(token);
+    initiateMultipartUpload = async (userId, uploadDate) => {
         return this.uploadService.initiateMultipartUpload(userId, uploadDate);
     }
 
-    getUploadPartUrl = async (token, uploadId, partNumber, uploadDate) => {
-        const userId = this.tokenService.getUserId(token);
+    getUploadPartUrl = async (userId, uploadId, partNumber, uploadDate) => {
         return this.uploadService.getUploadPartUrl(userId, uploadId, partNumber, uploadDate);
     };
 
-    completeMultipartUpload = async (token, uploadId, parts, uploadDate, timestamps) => {
-        const userId = this.tokenService.getUserId(token);
+    completeMultipartUpload = async (userId, uploadId, parts, uploadDate, timestamps) => {
         return this.uploadService.completeMultipartUpload(userId, uploadId, parts, uploadDate, timestamps);
     };
 }

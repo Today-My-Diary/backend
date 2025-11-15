@@ -8,7 +8,7 @@ export class UploadController {
     async initiateMultipartUpload(req, res, next) {
         try {
             const { uploadDate } = req.body;
-            const result = await this.uploadBusiness.initiateMultipartUpload(req.headers.authorization, uploadDate);
+            const result = await this.uploadBusiness.initiateMultipartUpload(req.user.userId, uploadDate);
             res.status(200).json(result);
         } catch (error) {
             next(error);
@@ -19,7 +19,7 @@ export class UploadController {
     async getUploadPartUrl(req, res, next) {
         try {
             const { uploadId, partNumber, uploadDate } = req.body;
-            const presignedUrl = await this.uploadBusiness.getUploadPartUrl(req.headers.authorization, uploadId, partNumber, uploadDate);
+            const presignedUrl = await this.uploadBusiness.getUploadPartUrl(req.user.userId, uploadId, partNumber, uploadDate);
             res.status(200).json({ presignedUrl });
         } catch (error) {
             next(error);
@@ -30,7 +30,7 @@ export class UploadController {
     async completeMultipartUpload(req, res, next) {
         try {
             const { uploadId, parts, uploadDate, timestamps } = req.body;
-            const result = await this.uploadBusiness.completeMultipartUpload(req.headers.authorization, uploadId, parts, uploadDate, timestamps);
+            const result = await this.uploadBusiness.completeMultipartUpload(req.user.userId, uploadId, parts, uploadDate, timestamps);
             res.status(200).json(result);
         } catch (error) {
             next(error);
