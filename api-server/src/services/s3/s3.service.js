@@ -1,4 +1,10 @@
-import { CreateMultipartUploadCommand, UploadPartCommand, CompleteMultipartUploadCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+    CreateMultipartUploadCommand,
+    UploadPartCommand,
+    CompleteMultipartUploadCommand,
+    DeleteObjectCommand,
+    PutObjectCommand
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export class S3Service {
@@ -56,13 +62,30 @@ export class S3Service {
         }
     }
 
-    // S3 key 생성 (예: "videos/123/20251107")
-    generateS3Key = (userId, uploadDate) => {
+    callGetPutObjectUrl = async (userId, uploadDate) => {
+        const command = this._createPutObjectCommand(userId, uploadDate)
+
+        try {
+            // 단일 파일 업로드(PUT)용 URL 생성 (10분간 유효)
+            return await getSignedUrl(this.s3Client, command, { expiresIn: 600 });
+        } catch (error) {
+            console.error("S3 GetPutObjectUrl 에러:", error);
+            throw new Error("썸네일 업로드 URL을 가져올 수 없습니다.");
+        }
+    }
+
+    // 영상 업로드용 S3 key 생성 (예: "videos/123/2025-11-07")
+    generateVideoS3Key = (userId, uploadDate) => {
         return `videos/${userId}/${uploadDate}`;
     }
 
+    // 썸네일 전용 S3 Key 생성 (예: thumbnails/123/2025-11-07)
+    generateThumbnailS3Key = (userId, uploadDate) => {
+        return `thumbnails/${userId}/${uploadDate}`;
+    }
+
     _createMultiPartsInitiateCommand = (userId, uploadDate) => {
-        const key = this.generateS3Key(userId, uploadDate);
+        const key = this.generateVideoS3Key(userId, uploadDate);
 
         return new CreateMultipartUploadCommand({
             Bucket: this.s3BucketName,
@@ -71,7 +94,7 @@ export class S3Service {
     };
 
     _createMultiPartsUploadCommand = (userId, uploadId, partNumber, uploadDate) => {
-        const key = this.generateS3Key(userId, uploadDate);
+        const key = this.generateVideoS3Key(userId, uploadDate);
 
         return new UploadPartCommand({
             Bucket: this.s3BucketName,
@@ -82,7 +105,7 @@ export class S3Service {
     }
 
     _createMultiPartsCompleteCommand = (userId, uploadId, parts, uploadDate) => {
-        const key = this.generateS3Key(userId, uploadDate);
+        const key = this.generateVideoS3Key(userId, uploadDate);
         return new CompleteMultipartUploadCommand({
             Bucket: this.s3BucketName,
             Key: key,
@@ -99,4 +122,12 @@ export class S3Service {
             Key: s3Key,
         });
     }
+
+    _createPutObjectCommand = (userId, uploadDate) => {
+        const key = this.generateThumbnailS3Key(userId, uploadDate);
+        return new PutObjectCommand({
+            Bucket: this.s3BucketName,
+            Key: key,
+        });
+    };
 }
