@@ -17,7 +17,7 @@ import { UploadBusiness } from './business/upload.business.js';
 
 // Controllers
 import { AuthController } from './controllers/auth.controller.js';
-import { UploadController } from './controllers/upload.controller.js';
+import { UploadMultiPartsController } from './controllers/upload.multi-parts.controller.js';
 
 // 환경변수 설정
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
@@ -41,4 +41,4 @@ const uploadBusiness = new UploadBusiness(uploadService);
 
 // Controllers
 export const authController = new AuthController(authBusiness);
-export const uploadController = new UploadController(uploadBusiness);
+export const uploadMultiPartsController = new UploadMultiPartsController(uploadBusiness);

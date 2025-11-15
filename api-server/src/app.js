@@ -3,9 +3,9 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 
-import authRouter from './routes/auth.router.js';
-import uploadRouter from './routes/upload.router.js';
 import { errorHandler } from './middlewares/error-handler.middleware.js';
+import authRouter from './routes/auth.router.js';
+import uploadMultiPartsRouter from "./routes/upload.multi-parts.router.js";
 
 const app = express();
 
@@ -21,7 +21,7 @@ app.use(cookieParser());
 app.use(cors(corsOptions));
 
 app.use('/api/auth', authRouter);
-app.use('/api/uploads', uploadRouter);
+app.use('/api/uploads/multi-parts', uploadMultiPartsRouter);
 
 app.use(errorHandler);
 
