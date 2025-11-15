@@ -37,7 +37,7 @@ const uploadService = new UploadService(s3Client, s3BucketName, videoRepository)
 
 // Business
 const authBusiness = new AuthBusiness(authService, userService, tokenService);
-const uploadBusiness = new UploadBusiness(tokenService, uploadService);
+const uploadBusiness = new UploadBusiness(uploadService);
 
 // Controllers
 export const authController = new AuthController(authBusiness);
