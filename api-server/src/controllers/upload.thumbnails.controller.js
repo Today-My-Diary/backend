@@ -1,4 +1,4 @@
-export class UploadThumbnailController {
+export class UploadThumbnailsController {
 
     constructor(uploadThumbnailsBusiness) {
         this.uploadThumbnailsBusiness = uploadThumbnailsBusiness;
@@ -8,7 +8,7 @@ export class UploadThumbnailController {
     async getThumbnailPresignedUrl(req, res) {
         try {
             const { uploadDate } = req.body;
-            const presignedUrl = await this.uploadThumbnailsBusiness.getThumbnailPresignedUrl(res.user.userId, uploadDate);
+            const presignedUrl = await this.uploadThumbnailsBusiness.getThumbnailPresignedUrl(req.user.userId, uploadDate);
             res.status(200).json(presignedUrl);
         } catch (error) {
             res.status(400).json({ error: error.message });
@@ -19,7 +19,7 @@ export class UploadThumbnailController {
     async completeThumbnailUpload(req, res) {
         try {
             const { uploadDate } = req.body;
-            await this.uploadThumbnailsBusiness.completeThumbnailUpload(res.user.userId, uploadDate);
+            await this.uploadThumbnailsBusiness.completeThumbnailUpload(req.user.userId, uploadDate);
             res.status(200).send("썸네일 업로드 완료");
         } catch (error) {
             res.status(400).json({ error: error.message });
