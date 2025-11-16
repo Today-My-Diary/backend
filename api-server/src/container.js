@@ -3,7 +3,7 @@ import { S3Client } from '@aws-sdk/client-s3';
 
 // Domain (Repositories)
 import { UserRepository } from './domain/repositories/user.repository.js';
-import {VideoRepository } from './domain/repositories/video.repository.js'
+import { VideoRepository } from './domain/repositories/video.repository.js'
 
 // Services
 import { AuthService } from './services/auth/auth.service.js';
@@ -21,7 +21,7 @@ import { UploadThumbnailsBusiness } from './business/upload.thumbnails.business.
 // Controllers
 import { AuthController } from './controllers/auth.controller.js';
 import { UploadMultiPartsController } from './controllers/upload.multi-parts.controller.js';
-import { UploadThumbnailController } from '././controllers/upload.thumbnails.controller.js';
+import { UploadThumbnailsController } from './controllers/upload.thumbnails.controller.js';
 
 // 환경변수 설정
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
@@ -49,4 +49,4 @@ const uploadThumbnailsBusiness = new UploadThumbnailsBusiness(uploadThumbnailsSe
 // Controllers
 export const authController = new AuthController(authBusiness);
 export const uploadMultiPartsController = new UploadMultiPartsController(uploadMultiPartsBusiness);
-export const uploadThumbnailsController = new UploadThumbnailController(uploadThumbnailsBusiness);
+export const uploadThumbnailsController = new UploadThumbnailsController(uploadThumbnailsBusiness);
