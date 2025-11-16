@@ -13,6 +13,30 @@ export class VideoRepository {
         }
     }
 
+    async upsertByDate(userId, uploadDate, data) {
+        const userBigIntId = BigInt(userId);
+
+        try {
+            return await this.prisma.video.upsert({
+                where: {
+                    userId_uploadDate: {
+                        userId: userBigIntId,
+                        uploadDate: uploadDate
+                    }
+                },
+                update: data,
+                create: {
+                    userId: userBigIntId,
+                    uploadDate: uploadDate,
+                    ...data
+                }
+            });
+        } catch (error) {
+            console.error("VideoRepository upsertByDate 에러:", error);
+            throw new Error("데이터베이스에 비디오 정보를 저장/업데이트할 수 없습니다.");
+        }
+    }
+
     // userId, uploadDate 로 단일 비디오 조회
     async findByDate(userId, uploadDate) {
         try {
