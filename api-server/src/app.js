@@ -7,6 +7,7 @@ import { errorHandler } from './middlewares/error-handler.middleware.js';
 import authRouter from './routes/auth.router.js';
 import uploadMultiPartsRouter from "./routes/upload.multi-parts.router.js";
 import uploadThumbnailsRouter from "./routes/upload.thumbnails.router.js";
+import videoRouter from "./routes/video.router.js";
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use(cors(corsOptions));
 app.use('/api/auth', authRouter);
 app.use('/api/uploads/multi-parts', uploadMultiPartsRouter);
 app.use('/api/uploads/thumbnails', uploadThumbnailsRouter)
+app.use('/api/videos', videoRouter)
 
 app.use(errorHandler);
 

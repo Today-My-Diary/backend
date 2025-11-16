@@ -12,16 +12,19 @@ import { UserService } from './services/user/user.service.js';
 import { S3Service } from "./services/s3/s3.service.js";
 import { UploadMultiPartsService } from './services/upload/upload.multi-parts.service.js';
 import { UploadThumbnailsService } from './services/upload/upload.thumbnails.service.js';
+import { VideoService } from './services/video/video.service.js';
 
 // Business
 import { AuthBusiness } from './business/auth.business.js';
 import { UploadMultiPartsBusiness } from './business/upload.multi-parts.business.js';
 import { UploadThumbnailsBusiness } from './business/upload.thumbnails.business.js';
+import { VideoBusiness } from './business/video.business.js';
 
 // Controllers
 import { AuthController } from './controllers/auth.controller.js';
 import { UploadMultiPartsController } from './controllers/upload.multi-parts.controller.js';
 import { UploadThumbnailsController } from './controllers/upload.thumbnails.controller.js';
+import { VideoController } from './controllers/video.controller.js'
 
 // 환경변수 설정
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
@@ -40,13 +43,16 @@ export const tokenService = new TokenService();
 export const userService = new UserService(userRepository);
 export const uploadMultiPartsService = new UploadMultiPartsService(s3Service, videoRepository)
 export const uploadThumbnailsService = new UploadThumbnailsService(s3Service, videoRepository)
+const videoService = new VideoService(videoRepository);
 
 // Business
 const authBusiness = new AuthBusiness(authService, userService, tokenService);
 const uploadMultiPartsBusiness = new UploadMultiPartsBusiness(uploadMultiPartsService);
 const uploadThumbnailsBusiness = new UploadThumbnailsBusiness(uploadThumbnailsService);
+const videoBusiness = new VideoBusiness(videoService);
 
 // Controllers
 export const authController = new AuthController(authBusiness);
 export const uploadMultiPartsController = new UploadMultiPartsController(uploadMultiPartsBusiness);
 export const uploadThumbnailsController = new UploadThumbnailsController(uploadThumbnailsBusiness);
+export const videoController = new VideoController(videoBusiness);

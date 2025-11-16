@@ -1,0 +1,35 @@
+export class VideoService {
+    constructor(videoRepository) {
+        this.videoRepository = videoRepository;
+    }
+
+    async getVideosByMonth(userId, year, month) {
+        const paddedMonth = String(month).padStart(2, '0');
+        const searchPrefix = `${year}-${paddedMonth}-`; // ex. "2025-11-"
+
+        return await this.videoRepository.findByMonth(userId, searchPrefix);
+    }
+
+    // 오늘 영상 피드 조회
+    async getTodayFeed(userId) {
+        const todayDate = this._getTodayKST(); // ex. "2025-11-15"
+        const todayVideo = await this.videoRepository.findByDate(userId, todayDate);
+
+        let pastVideos = [];
+        if (todayVideo && todayVideo.s3Url) {
+            // 오늘 비디오 존재시, 과거의 랜덤 비디오 3개 추첨
+            pastVideos = await this.videoRepository.findRandomPastVideos(userId, todayDate, 3);
+        }
+
+        return {
+            todayVideoExists: !!(todayVideo && todayVideo.s3Url),
+            pastVideos: pastVideos,
+        };
+    }
+
+    // KST 기준 오늘 날짜를 "YYYY-MM-DD" 문자열로 반환
+    _getTodayKST() {
+        const now = new Date();
+        return now.toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }).split(' ')[0];
+    }
+}
