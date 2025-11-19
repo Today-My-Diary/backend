@@ -5,19 +5,27 @@ export class EncodingController {
 
     async handleEncodingVideo(req, res, next) {
         try{
-            const { inputUrl, outputDir, filename } = req.body;
+            const { uploadId, key, filename } = req.body;
             const userId = req.auth.userId;
             console.log("req.auth: ", req.auth);
 
-            if(!inputUrl || !outputDir || !filename) {
+            if(!uploadId || !key || !filename) {
                 return res.status(400).json({
                     success: false,
                     message: "파라미터 누락되었습니다.",
                 });
             }
 
+            if (!filename.endsWith(".webm")) {
+                return res.status(400).json({
+                    success: false,
+                    message: ".webm 영상만 지원합니다",
+                });
+            }
+
             const result = await this.encodingBusiness.handleEncoding({
-                inputUrl,
+                uploadId,
+                key,
                 filename,
                 userId,
             });
