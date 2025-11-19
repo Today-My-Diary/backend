@@ -5,22 +5,24 @@ export class EncodingBusiness {
         this.apiClient = apiClient;
     }
 
-    async handleEncoding ({inputUrl, filename, userId}) {
+    async handleEncoding ({uploadId, key, filename, userId}) {
         const { workspace, jobId } = await this.encodingService.prepareWorkspace(userId);
-        const paths = this.encodingService.getHlsPaths(workspace);
+        const paths = this.encodingService.getHlsPaths(workspace, filename);
 
         try{
-            await this.s3Service.downloadFromUrl(inputUrl, paths.input);
+            const parts = await this.apiClient.getMultipartParts(uploadId, key);
 
-            await this.encodingService.transcodeHls(paths.input, paths);
+            const concatListPath = await this.encodingService.generateConcatList(paths, parts);
+
+            await this.encodingService.transcodeMultipartHls(concatListPath, paths);
 
             await this.encodingService.generateMasterPlaylist(paths);
 
-            const uploadResult = await this.s3Service.uploadHlsAndBuildResponse({workspace, userId, jobId});
-
+            const uploadResult = await this.s3Service.uploadAndBuildResponse({ workspace, userId, jobId });
+            
             const { videoKey, hlsUrl } = uploadResult;
 
-            await this.apiClient.notifyEncodingComplete({userId, videoKey, hlsUrl});
+            console.log("[MOCK] Encoding complete:", { userId, videoKey, hlsUrl });
 
             return uploadResult;
             

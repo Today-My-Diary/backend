@@ -5,6 +5,10 @@ import os from "os";
 import fs from "fs";
 
 export class EncodingService {
+    constructor(ffmpegConfig){
+        this.ffmpegConfig = ffmpegConfig;
+    }
+
     async prepareWorkspace(userId){
         const baseTempDir = path.join(os.tmpdir(), "encoding");
         
@@ -24,9 +28,9 @@ export class EncodingService {
         return { workspace, jobId };
     }
 
-    getHlsPaths(workspace) {
+    getHlsPaths(workspace, filename) {
         const paths = {
-            input: path.join(workspace, "input", "input.mp4"),
+            concatList: path.join(workspace, "input", "input.txt"),
             masterPlaylist: path.join(workspace, "master.m3u8"),
             logFile: path.join(workspace, "logs", "ffmpeg.log"),
         };
@@ -36,6 +40,16 @@ export class EncodingService {
         }
         
         return paths;
+    }
+
+    async generateConcatList(paths, parts) {
+        const lines = parts
+            .sort((a, b) => a.partNumber - b.partNumber)
+            .map(p => `file '${p.presignedUrl}'`)
+            .join("\n");
+
+        await fs.promises.writeFile(paths.concatList, lines);
+        return paths.concatList;
     }
 
     runFfmpeg(args, logFile){
@@ -64,20 +78,31 @@ export class EncodingService {
         });
     }
 
-    async transcodeHls(inputPath, paths){
+    async transcodeMultipartHls(concatListPath, paths){
+        const decoderArgs = [
+            "-c:v", "libvpx-vp9"
+        ];
+
         for(const res of Object.keys(hlsProfiles)) {
             const profile = hlsProfiles[res];
 
             const outputDir = paths[`out_${res}`];
             const segmentPath = `${outputDir}/segment_%03d.ts`;
             const playlistPath = `${outputDir}/index.m3u8`;
-
+            
             const args = [
-                "-i", inputPath,
+                "-protocol_whitelist", "file, http, https, tcp, tls",
+                "-f", "concat",
+                "-safe", "0",
+                "-i", concatListPath,
+
+                ...decoderArgs,
+                 "-c:v", this.ffmpegConfig.videoCodec,
+                "-preset", this.ffmpegConfig.preset,
+                "-crf", String(this.ffmpegConfig.crf),
 
                 // video settings
                 "-vf", profile.scale,
-                "-c:v", "h264",
                 "-profile:v", profile.video.profile,
                 "-level", profile.video.level,
                 "-b:v", profile.video.bitrate,
