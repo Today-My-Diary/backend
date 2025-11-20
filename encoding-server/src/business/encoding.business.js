@@ -1,23 +1,33 @@
-import path from "path";
-
 export class EncodingBusiness {
-    constructor(encodingService, s3Service) {
+    constructor(encodingService, s3Service, apiClient) {
         this.encodingService = encodingService;
         this.s3Service = s3Service;
+        this.apiClient = apiClient;
     }
 
-    async handleEncoding ({inputUrl, filename, userId}) {
-        const outputDir = await this.encodingService.prepareWorkspace(userId);
-        const { tempInputPath, outputPath } = await this.encodingService.preparePaths(outputDir, filename);
+    async handleEncoding ({uploadId, key, filename, userId}) {
+        const { workspace, jobId } = await this.encodingService.prepareWorkspace(userId);
+        const paths = this.encodingService.getHlsPaths(workspace, filename);
 
         try{
-            await this.s3Service.downloadFromUrl(inputUrl, tempInputPath);
+            const parts = await this.apiClient.getMultipartParts(uploadId, key);
 
-            const encodingResult = await this.encodingService.transcodeVideo(tempInputPath, outputDir, filename);
+            const concatListPath = await this.encodingService.generateConcatList(paths, parts);
 
-            return await this.s3Service.uploadAndBuildResponse({encodingResult, inputUrl, filename, userId});
+            await this.encodingService.transcodeMultipartHls(concatListPath, paths);
+
+            await this.encodingService.generateMasterPlaylist(paths);
+
+            const uploadResult = await this.s3Service.uploadAndBuildResponse({ workspace, userId, jobId });
+            
+            const { videoKey, hlsUrl } = uploadResult;
+
+            console.log("[MOCK] Encoding complete:", { userId, videoKey, hlsUrl });
+
+            return uploadResult;
+            
         } finally {
-            await this.encodingService.cleanupWorkspace(outputDir);
+            await this.encodingService.cleanupWorkspace(workspace);
         }
     }
 }
