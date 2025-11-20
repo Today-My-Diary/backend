@@ -23,6 +23,7 @@ const s3Client = new S3Client({
 const s3Bucket = process.env.S3_BUCKET_NAME;
 const awsRegion = process.env.AWS_REGION;
 const apiServer = process.env.API_SERVER_URL;
+
 // Repositories
 
 // Services
@@ -32,6 +33,7 @@ export const apiClient = new ApiClient(apiServer);
 
 // Business
 const encodingBusiness = new EncodingBusiness(encodingService, s3Service, apiClient);
+
 
 // Controllers
 export const encodingController = new EncodingController(encodingBusiness);
