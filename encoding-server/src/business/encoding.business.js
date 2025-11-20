@@ -10,11 +10,7 @@ export class EncodingBusiness {
         const paths = this.encodingService.getHlsPaths(workspace, filename);
 
         try{
-            const parts = await this.apiClient.getMultipartParts(uploadId, key);
-
-            const concatListPath = await this.encodingService.generateConcatList(paths, parts);
-
-            await this.encodingService.transcodeMultipartHls(concatListPath, paths);
+            await this.encodingService.transcodeMultipartHls(null, paths);
 
             await this.encodingService.generateMasterPlaylist(paths);
 

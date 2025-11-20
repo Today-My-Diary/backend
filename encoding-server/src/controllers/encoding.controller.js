@@ -9,7 +9,7 @@ export class EncodingController {
             const userId = req.auth.userId;
             console.log("req.auth: ", req.auth);
 
-            if(!uploadId || !key || !filename) {
+            if(!key || !filename) {
                 return res.status(400).json({
                     success: false,
                     message: "파라미터 누락되었습니다.",
