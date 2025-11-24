@@ -16,18 +16,25 @@ export class VideoRepository {
     async upsertByDate(userId, uploadDate, data) {
         const userBigIntId = BigInt(userId);
 
+        const cleanDate = uploadDate.split('T')[0];
+
         try {
             return await this.prisma.video.upsert({
                 where: {
                     userId_uploadDate: {
                         userId: userBigIntId,
-                        uploadDate: uploadDate
+                        uploadDate: {
+                            startsWith: cleanDate // ex. "2025-11-24"로 시작하는 것 찾기
+                        }
                     }
                 },
-                update: data,
+                update: {
+                    ...data,
+                    uploadDate: cleanDate
+                },
                 create: {
                     userId: userBigIntId,
-                    uploadDate: uploadDate,
+                    uploadDate: cleanDate,
                     ...data
                 }
             });
