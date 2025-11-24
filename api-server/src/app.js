@@ -8,14 +8,9 @@ import authRouter from './routes/auth.router.js';
 import uploadMultiPartsRouter from "./routes/upload.multi-parts.router.js";
 import uploadThumbnailsRouter from "./routes/upload.thumbnails.router.js";
 import videoRouter from "./routes/video.router.js";
-import { rabbitMQProducerService } from './container.js';
-import { rabbitMQConsumerService } from './container.js';
-import { videoBusiness } from './container.js';
+import { rabbitMQProducerService, rabbitMQConsumerService, videoBusiness } from './container.js';
 
 const app = express();
-
-await rabbitMQProducerService.connect();
-await rabbitMQConsumerService.consume(videoBusiness.handleEncodedVideo.bind(videoBusiness));
 
 const corsOptions = {
     origin: process.env.FRONTEND_URL,
@@ -24,6 +19,10 @@ const corsOptions = {
     credentials: true,
 }
 
+await rabbitMQProducerService.connect();
+await rabbitMQConsumerService.consume(videoBusiness.handleEncodedVideo.bind(videoBusiness));
+
+BigInt.prototype.toJSON = function() { return this.toString(); }
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors(corsOptions));

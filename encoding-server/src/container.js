@@ -31,8 +31,8 @@ const apiServer = process.env.API_SERVER_URL;
 // Services
 export const s3Service = new S3Service(s3Client, s3Bucket, awsRegion);
 const encodingService = new EncodingService();
-const rabbitMQProducerService = new RabbitMQProducerService();
-const rabbitMQConsumerService = new RabbitMQConsumerService();
+export const rabbitMQProducerService = new RabbitMQProducerService();
+export const rabbitMQConsumerService = new RabbitMQConsumerService();
 export const apiClient = new ApiClient(apiServer);
 
 // Business

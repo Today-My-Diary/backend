@@ -34,14 +34,6 @@ export class EncodingBusiness {
     // }
 
     /**
-     * 서버 시작 시 호출 메서드
-     * 메시지 도착시 handleEncoding 메서드 실행
-     */
-    async initConsume() {
-        await this.rabbitMQConsumerService.consume(this.handleEncoding.bind(this));
-    }
-
-    /**
      * 실제 인코딩 작업을 수행
      * @param {object} data - { userId, s3Key, s3Url, uploadedAt }
      */
@@ -63,7 +55,7 @@ export class EncodingBusiness {
         const resultMetadata = {
             userId: data.userId,
             originalS3Key: data.s3Key,
-            encodedS3Url: "https://s3.../encoded_video.m3u8",  // 인코딩 결과
+            encodedS3Url: "https://haru-film-bucket.s3.ap-northeast-2.amazonaws.com/videos%2F1%2F2025-11-24T13%3A08%3A03.471Z",  // 인코딩 결과
             status: 'COMPLETED' // 인코딩 결과
         };
 

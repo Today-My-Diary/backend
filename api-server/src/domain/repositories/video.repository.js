@@ -62,7 +62,7 @@ export class VideoRepository {
                     userId: BigInt(userId),
                     uploadDate: {
                         startsWith: uploadDatePrefix // ex. "2025-11-"
-                    }
+                    },
                 },
                 select: {
                     videoId: true,
@@ -91,6 +91,7 @@ export class VideoRepository {
                     uploadDate: {
                         lt: todayDate
                     },
+                    status: 'COMPLETE',
                     s3Url: {
                         not: null
                     }
