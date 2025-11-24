@@ -1,11 +1,11 @@
 import amqp from 'amqplib';
 
-export class RabbitMQService {
+export class RabbitMQProducerService {
     constructor() {
         this.connection = null;
         this.channel = null;
         this.queueName = 'video_encoding';
-        this.rabbitMQUrl = process.env.RABBITMQ_URL || 'amqp://localhost';
+        this.rabbitMQUrl = process.env.RABBITMQ_URL;
     }
 
     async connect() {

@@ -13,7 +13,7 @@ import { S3Service } from "./services/s3/s3.service.js";
 import { UploadMultiPartsService } from './services/upload/upload.multi-parts.service.js';
 import { UploadThumbnailsService } from './services/upload/upload.thumbnails.service.js';
 import { VideoService } from './services/video/video.service.js';
-import { RabbitMQService } from './services/rabbitmq/producer.js';
+import { RabbitMQProducerService } from './services/rabbitmq/rabbitmq.producer.service.js';
 
 // Business
 import { AuthBusiness } from './business/auth.business.js';
@@ -42,8 +42,8 @@ const authService = new AuthService();
 export const s3Service = new S3Service(s3Client, s3BucketName);
 export const tokenService = new TokenService();
 export const userService = new UserService(userRepository);
-export const rabbitMQService = new RabbitMQService();
-export const uploadMultiPartsService = new UploadMultiPartsService(s3Service, videoRepository, rabbitMQService)
+export const rabbitMQProducerService = new RabbitMQProducerService();
+export const uploadMultiPartsService = new UploadMultiPartsService(s3Service, videoRepository, rabbitMQProducerService)
 export const uploadThumbnailsService = new UploadThumbnailsService(s3Service, videoRepository)
 const videoService = new VideoService(videoRepository);
 
