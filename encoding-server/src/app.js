@@ -5,6 +5,7 @@ import cors from 'cors';
 
 import encodingRouter from './routes/encoding.router.js';
 import healthRouter from "./routes/health.router.js";
+import { encodingBusiness } from './container.js';
 import { errorHandler } from './middlewares/error-handler.middleware.js';
 
 const app = express();
@@ -15,6 +16,8 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
 }
+
+await encodingBusiness.initConsume();
 
 app.use(express.json());
 app.use(cookieParser());

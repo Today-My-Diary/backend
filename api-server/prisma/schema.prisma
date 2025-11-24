@@ -16,11 +16,19 @@ model User {
   videos    Video[]
 }
 
+enum VideoStatus {
+  PENDING   // 완료 전 (업로드 직후, 인코딩 중)
+  COMPLETE  // 완료 후 (인코딩 완료, 서비스 가능)
+}
+
 model Video {
   videoId     BigInt     @id @default(autoincrement())
   s3Key       String?     @unique
   s3Url       String?
   uploadDate  String
+
+  // 인코딩 상태 필드 (기본값은 PENDING)
+  status      VideoStatus @default(PENDING)
 
   // Thumbnail
   thumbnailS3Key String?    @unique

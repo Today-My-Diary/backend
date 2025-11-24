@@ -141,4 +141,25 @@ export class VideoRepository {
             throw new Error("랜덤 비디오 조회에 실패했습니다.");
         }
     }
+
+    // 인코딩 완료 후 s3Url 업데이트
+    async updateEncodingResult(userId, s3Key, resultData) {
+        try {
+            return await this.prisma.video.update({
+                where: {
+                    s3Key: s3Key,
+                },
+                data: {
+                    s3Url: resultData.encodedUrl,
+                    status: resultData.status,
+                }
+            });
+        } catch (error) {
+            console.error("VideoRepository updateEncodingResult 에러:", error);
+            if (error.code === 'P2025') {
+                throw new Error("업데이트할 비디오를 찾을 수 없습니다.");
+            }
+            throw new Error("비디오 인코딩 결과를 업데이트할 수 없습니다.");
+        }
+    }
 }

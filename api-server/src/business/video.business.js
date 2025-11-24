@@ -10,4 +10,8 @@ export class VideoBusiness {
     async getTodayFeed(userId) {
         return await this.videoService.getTodayFeed(userId);
     }
+
+    async handleEncodedVideo(msgContent) {
+        return await this.videoService.handleEncodedVideo(msgContent);
+    }
 }

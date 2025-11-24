@@ -9,10 +9,13 @@ import uploadMultiPartsRouter from "./routes/upload.multi-parts.router.js";
 import uploadThumbnailsRouter from "./routes/upload.thumbnails.router.js";
 import videoRouter from "./routes/video.router.js";
 import { rabbitMQProducerService } from './container.js';
+import { rabbitMQConsumerService } from './container.js';
+import { videoBusiness } from './container.js';
 
 const app = express();
 
-rabbitMQProducerService.connect();
+await rabbitMQProducerService.connect();
+await rabbitMQConsumerService.consume(videoBusiness.handleEncodedVideo.bind(videoBusiness));
 
 const corsOptions = {
     origin: process.env.FRONTEND_URL,

@@ -5,7 +5,7 @@ export class RabbitMQProducerService {
         this.connection = null;
         this.channel = null;
         this.exchangeName = 'harufilm_exchange';
-        this.routingKey = 'video.encoding';
+        this.routingKey = 'video.complete';
         this.exchangeType = 'direct';
         this.rabbitMQUrl = process.env.RABBITMQ_URL;
     }
@@ -16,7 +16,7 @@ export class RabbitMQProducerService {
             this.channel = await this.connection.createChannel();
 
             await this.channel.assertExchange(this.exchangeName, this.exchangeType, {
-                durable: true // RabbitMQ가 재시작되어도 Exchange 설정 유지
+                durable: true
             });
 
             console.log(`Connected to RabbitMQ & Exchange '${this.exchangeName}' is ready`);
@@ -28,7 +28,7 @@ export class RabbitMQProducerService {
     }
 
     /**
-     * @param {object} msg - 전송할 메시지 객체. { userId, s3Key, s3Url }
+     * @param {object} msg - 전송할 메시지 객체. { userId, originalS3Key, encodedS3Url, status }
      */
     async sendMessage(msg) {
         if (!this.channel) {
@@ -49,7 +49,6 @@ export class RabbitMQProducerService {
             } else {
                 console.error('Message buffer full, failed to send immediately.');
             }
-
         } catch (error) {
             console.error('Failed to publish message', error);
         }
