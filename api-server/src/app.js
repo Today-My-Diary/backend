@@ -8,11 +8,11 @@ import authRouter from './routes/auth.router.js';
 import uploadMultiPartsRouter from "./routes/upload.multi-parts.router.js";
 import uploadThumbnailsRouter from "./routes/upload.thumbnails.router.js";
 import videoRouter from "./routes/video.router.js";
-import { rabbitMQService } from './container.js';
+import { rabbitMQProducerService } from './container.js';
 
 const app = express();
 
-rabbitMQService.connect();
+rabbitMQProducerService.connect();
 
 const corsOptions = {
     origin: process.env.FRONTEND_URL,
