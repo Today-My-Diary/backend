@@ -23,9 +23,7 @@ export class VideoRepository {
                 where: {
                     userId_uploadDate: {
                         userId: userBigIntId,
-                        uploadDate: {
-                            startsWith: cleanDate // ex. "2025-11-24"로 시작하는 것 찾기
-                        }
+                        uploadDate: cleanDate
                     }
                 },
                 update: {
@@ -47,11 +45,13 @@ export class VideoRepository {
     // userId, uploadDate 로 단일 비디오 조회
     async findByDate(userId, uploadDate) {
         try {
-            return await this.prisma.video.findUnique({
+            return await this.prisma.video.findFirst({
                 where: {
                     userId_uploadDate: {
                         userId: BigInt(userId),
-                        uploadDate: uploadDate
+                        uploadDate: {
+                               startsWith: uploadDate // ex. "2025-11-24"로 시작하는 것 찾기
+                        }
                     }
                 }
             });
