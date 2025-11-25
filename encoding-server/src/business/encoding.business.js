@@ -1,65 +1,40 @@
 export class EncodingBusiness {
-    constructor(encodingService, s3Service, apiClient, rabbitMQProducerService, rabbitMQConsumerService) {
+    constructor(encodingService, s3Service, rabbitMQProducerService) {
         this.encodingService = encodingService;
         this.s3Service = s3Service;
-        this.apiClient = apiClient;
         this.rabbitMQProducerService = rabbitMQProducerService;
-        this.rabbitMQConsumerService = rabbitMQConsumerService;
     }
 
-    // async handleEncoding ({uploadId, key, filename, userId}) {
-    //     const { workspace, jobId } = await this.encodingService.prepareWorkspace(userId);
-    //     const paths = this.encodingService.getHlsPaths(workspace, filename);
-    //
-    //     try{
-    //         const parts = await this.apiClient.getMultipartParts(uploadId, key);
-    //
-    //         const concatListPath = await this.encodingService.generateConcatList(paths, parts);
-    //
-    //         await this.encodingService.transcodeMultipartHls(concatListPath, paths);
-    //
-    //         await this.encodingService.generateMasterPlaylist(paths);
-    //
-    //         const uploadResult = await this.s3Service.uploadAndBuildResponse({ workspace, userId, jobId });
-    //
-    //         const { videoKey, hlsUrl } = uploadResult;
-    //
-    //         console.log("[MOCK] Encoding complete:", { userId, videoKey, hlsUrl });
-    //
-    //         return uploadResult;
-    //
-    //     } finally {
-    //         await this.encodingService.cleanupWorkspace(workspace);
-    //     }
-    // }
+    async handleEncoding ({userId, s3Key, s3Url}) {
+        const { workspace, jobId } = await this.encodingService.prepareWorkspace(userId);
+        const paths = this.encodingService.getHlsPaths(workspace, s3Key);
 
-    /**
-     * 실제 인코딩 작업을 수행
-     * @param {object} data - { userId, s3Key, s3Url, uploadedAt }
-     */
-    async handleEncoding(data) {
-        console.log(`[Encoding Start] User: ${data.userId}, File: ${data.s3Key}`);
+        try{
+            console.log(`[Encoding Start] User: ${data.userId}, File: ${data.s3Key}`);
 
-        // --- [실제 인코딩 로직이 들어갈 자리 (예시)] ---
-        //     1. S3에서 파일 다운로드
-        //     2. FFmpeg로 변환 (HLS, MP4 등)
-        //     3. S3에 변환된 파일 업로드
-        //     ....
-        //
-        //     인코딩 결과
-        //              -> encodedS3Url: "https://s3.../encoded_video.m3u8"
-        //              -> status: 'COMPLETED'
+            await this.encodingService.transcodeHls(s3Url, paths);
+            await this.encodingService.generateMasterPlaylist(paths);
+            const uploadResult = await this.s3Service.uploadAndBuildResponse({ workspace, userId, jobId });
 
+            const { videoKey, hlsUrl } = uploadResult;
 
-        // 가상의 결과 데이터 (재생 파일 위치) 예시입니다. (다음 항목들이 존재해야 합니다.)
-        const resultMetadata = {
-            userId: data.userId,
-            originalS3Key: data.s3Key,
-            encodedS3Url: "https://haru-film-bucket.s3.ap-northeast-2.amazonaws.com/videos%2F1%2F2025-11-24T13%3A08%3A03.471Z",  // 인코딩 결과
-            status: 'COMPLETED' // 인코딩 결과
-        };
+            //     인코딩 결과
+            //              -> encodedS3Url: "https://s3.../encoded_video.m3u8"
+            //              -> status: 'COMPLETED'
 
-        await this.rabbitMQProducerService.sendMessage(resultMetadata);
-        console.log(`[Encoding Finished] Result sent to API Server`);
+            // 가상의 결과 데이터 (재생 파일 위치) 예시입니다. (다음 항목들이 존재해야 합니다.)
+            const resultMetadata = {
+                userId: data.userId,
+                originalS3Key: data.s3Key,
+                encodedS3Url: hlsUrl,  // 인코딩 결과
+                status: 'COMPLETED' // 인코딩 결과
+            };
+
+            await this.rabbitMQProducerService.sendMessage(resultMetadata);
+            console.log(`[Encoding Finished] Result sent to API Server`);
+
+        } finally {
+            await this.encodingService.cleanupWorkspace(workspace);
+        }
     }
 }

@@ -22,17 +22,6 @@ export class ApiClient{
         } 
     } 
     
-    async getMultipartParts(uploadId, key){ 
-        try{ 
-            const response = await this.client.get("/uploads/parts", { params: { uploadId, key }, }); 
-            
-            return response.data; 
-        } catch(error){ 
-            console.error("[apiclient] getMultipartParts error", error.message); 
-            throw new Error("failed to fetch multipart uploaded parts"); 
-        } 
-    } 
-    
     async requestPresignedUrl(payload){ 
         try{ 
             const response = await this.client.post("/uploads/presigned-url", payload); 

@@ -8,4 +8,5 @@ const router = express.Router();
 // POST /api/encoding(PresignedURL, filename, userId to encoding server)
 router.post('/', authMiddleware, encodingController.handleEncodingVideo.bind(encodingController));
 
+
 export default router;

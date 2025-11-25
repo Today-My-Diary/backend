@@ -5,11 +5,11 @@ export class EncodingController {
 
     async handleEncodingVideo(req, res, next) {
         try{
-            const { uploadId, key, filename } = req.body;
+            const { s3Key, s3Url } = req.body;
             const userId = req.auth.userId;
             console.log("req.auth: ", req.auth);
 
-            if(!uploadId || !key || !filename) {
+            if(!s3Key || !s3Url) {
                 return res.status(400).json({
                     success: false,
                     message: "파라미터 누락되었습니다.",
@@ -24,9 +24,8 @@ export class EncodingController {
             }
 
             const result = await this.encodingBusiness.handleEncoding({
-                uploadId,
-                key,
-                filename,
+                s3Key,
+                s3Url,
                 userId,
             });
 
