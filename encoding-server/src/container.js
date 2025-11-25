@@ -36,7 +36,7 @@ export const rabbitMQConsumerService = new RabbitMQConsumerService();
 export const apiClient = new ApiClient(apiServer);
 
 // Business
-export const encodingBusiness = new EncodingBusiness(encodingService, s3Service, apiClient, rabbitMQProducerService, rabbitMQConsumerService);
+export const encodingBusiness = new EncodingBusiness(encodingService, s3Service, rabbitMQProducerService);
 
 // Controllers
 export const encodingController = new EncodingController(encodingBusiness);
