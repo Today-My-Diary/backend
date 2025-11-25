@@ -11,4 +11,7 @@ router.get('/', authMiddleware, videoController.getMonthlyVideos.bind(videoContr
 // GET /api/videos/today
 router.get('/today', authMiddleware, videoController.getTodayFeed.bind(videoController));
 
+// GET /api/videos/:date
+router.get('/:date', authMiddleware, videoController.getVideoByDate.bind(videoController));
+
 export default router;
