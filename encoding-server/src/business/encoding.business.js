@@ -5,16 +5,12 @@ export class EncodingBusiness {
         this.apiClient = apiClient;
     }
 
-    async handleEncoding ({uploadId, key, filename, userId}) {
+    async handleEncoding ({userId, s3Key, s3Url}) {
         const { workspace, jobId } = await this.encodingService.prepareWorkspace(userId);
-        const paths = this.encodingService.getHlsPaths(workspace, filename);
+        const paths = this.encodingService.getHlsPaths(workspace, s3Key);
 
         try{
-            const parts = await this.apiClient.getMultipartParts(uploadId, key);
-
-            const concatListPath = await this.encodingService.generateConcatList(paths, parts);
-
-            await this.encodingService.transcodeMultipartHls(concatListPath, paths);
+            await this.encodingService.transcodeHls(s3Url, paths);
 
             await this.encodingService.generateMasterPlaylist(paths);
 
