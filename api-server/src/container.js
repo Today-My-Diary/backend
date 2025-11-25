@@ -13,13 +13,15 @@ import { S3Service } from "./services/s3/s3.service.js";
 import { UploadMultiPartsService } from './services/upload/upload.multi-parts.service.js';
 import { UploadThumbnailsService } from './services/upload/upload.thumbnails.service.js';
 import { VideoService } from './services/video/video.service.js';
+import { RabbitMQProducerService } from './services/rabbitmq/rabbitmq.producer.service.js';
+import { RabbitMQConsumerService } from "./services/rabbitmq/rabbitmq.consumer.service.js";
 
 // Business
 import { AuthBusiness } from './business/auth.business.js';
 import { UploadMultiPartsBusiness } from './business/upload.multi-parts.business.js';
 import { UploadThumbnailsBusiness } from './business/upload.thumbnails.business.js';
-import { VideoBusiness } from './business/video.business.js';
 
+import { VideoBusiness } from './business/video.business.js';
 // Controllers
 import { AuthController } from './controllers/auth.controller.js';
 import { UploadMultiPartsController } from './controllers/upload.multi-parts.controller.js';
@@ -41,7 +43,9 @@ const authService = new AuthService();
 export const s3Service = new S3Service(s3Client, s3BucketName);
 export const tokenService = new TokenService();
 export const userService = new UserService(userRepository);
-export const uploadMultiPartsService = new UploadMultiPartsService(s3Service, videoRepository)
+export const rabbitMQProducerService = new RabbitMQProducerService();
+export const rabbitMQConsumerService = new RabbitMQConsumerService();
+export const uploadMultiPartsService = new UploadMultiPartsService(s3Service, videoRepository, rabbitMQProducerService)
 export const uploadThumbnailsService = new UploadThumbnailsService(s3Service, videoRepository)
 const videoService = new VideoService(videoRepository);
 
@@ -49,7 +53,7 @@ const videoService = new VideoService(videoRepository);
 const authBusiness = new AuthBusiness(authService, userService, tokenService);
 const uploadMultiPartsBusiness = new UploadMultiPartsBusiness(uploadMultiPartsService);
 const uploadThumbnailsBusiness = new UploadThumbnailsBusiness(uploadThumbnailsService);
-const videoBusiness = new VideoBusiness(videoService);
+export const videoBusiness = new VideoBusiness(videoService);
 
 // Controllers
 export const authController = new AuthController(authBusiness);

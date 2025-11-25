@@ -16,18 +16,23 @@ export class VideoRepository {
     async upsertByDate(userId, uploadDate, data) {
         const userBigIntId = BigInt(userId);
 
+        const cleanDate = uploadDate.split('T')[0];
+
         try {
             return await this.prisma.video.upsert({
                 where: {
                     userId_uploadDate: {
                         userId: userBigIntId,
-                        uploadDate: uploadDate
+                        uploadDate: cleanDate
                     }
                 },
-                update: data,
+                update: {
+                    ...data,
+                    uploadDate: cleanDate
+                },
                 create: {
                     userId: userBigIntId,
-                    uploadDate: uploadDate,
+                    uploadDate: cleanDate,
                     ...data
                 }
             });
@@ -40,11 +45,11 @@ export class VideoRepository {
     // userId, uploadDate 로 단일 비디오 조회
     async findByDate(userId, uploadDate) {
         try {
-            return await this.prisma.video.findUnique({
+            return await this.prisma.video.findFirst({
                 where: {
-                    userId_uploadDate: {
-                        userId: BigInt(userId),
-                        uploadDate: uploadDate
+                    userId: BigInt(userId),
+                    uploadDate: {
+                        startsWith: uploadDate
                     }
                 }
             });
@@ -62,7 +67,7 @@ export class VideoRepository {
                     userId: BigInt(userId),
                     uploadDate: {
                         startsWith: uploadDatePrefix // ex. "2025-11-"
-                    }
+                    },
                 },
                 select: {
                     videoId: true,
@@ -91,6 +96,7 @@ export class VideoRepository {
                     uploadDate: {
                         lt: todayDate
                     },
+                    status: 'COMPLETE',
                     s3Url: {
                         not: null
                     }
@@ -139,6 +145,27 @@ export class VideoRepository {
         } catch (error) {
             console.error("VideoRepository findRandomPastVideos 에러:", error);
             throw new Error("랜덤 비디오 조회에 실패했습니다.");
+        }
+    }
+
+    // 인코딩 완료 후 s3Url 업데이트
+    async updateEncodingResult(userId, s3Key, resultData) {
+        try {
+            return await this.prisma.video.update({
+                where: {
+                    s3Key: s3Key,
+                },
+                data: {
+                    s3Url: resultData.encodedUrl,
+                    status: resultData.status,
+                }
+            });
+        } catch (error) {
+            console.error("VideoRepository updateEncodingResult 에러:", error);
+            if (error.code === 'P2025') {
+                throw new Error("업데이트할 비디오를 찾을 수 없습니다.");
+            }
+            throw new Error("비디오 인코딩 결과를 업데이트할 수 없습니다.");
         }
     }
 }

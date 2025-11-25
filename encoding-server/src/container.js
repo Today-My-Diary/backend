@@ -7,6 +7,8 @@ import { EncodingService } from './services/encoding/encoding.service.js';
 import { ffmpegConfig } from './services/encoding/ffmpeg.config.js';
 import { S3Service } from './services/s3/s3.service.js';
 import { ApiClient } from './services/api/api.client.js';
+import { RabbitMQProducerService } from "./services/rabbitmq/rabbitmq.producer.service.js"
+import { RabbitMQConsumerService } from "./services/rabbitmq/rabbitmq.consumer.service.js";
 
 // Business
 import { EncodingBusiness } from './business/encoding.business.js';
@@ -28,12 +30,13 @@ const apiServer = process.env.API_SERVER_URL;
 
 // Services
 export const s3Service = new S3Service(s3Client, s3Bucket, awsRegion);
-const encodingService = new EncodingService(ffmpegConfig);
+const encodingService = new EncodingService();
+export const rabbitMQProducerService = new RabbitMQProducerService();
+export const rabbitMQConsumerService = new RabbitMQConsumerService();
 export const apiClient = new ApiClient(apiServer);
 
 // Business
-const encodingBusiness = new EncodingBusiness(encodingService, s3Service, apiClient);
-
+export const encodingBusiness = new EncodingBusiness(encodingService, s3Service, rabbitMQProducerService);
 
 // Controllers
 export const encodingController = new EncodingController(encodingBusiness);

@@ -1,8 +1,9 @@
 export class UploadMultiPartsService {
 
-    constructor(s3Service, videoRepository) {
+    constructor(s3Service, videoRepository, rabbitMQProducerService) {
         this.s3Service = s3Service;
         this.videoRepository = videoRepository;
+        this.rabbitMQProducerService = rabbitMQProducerService;
     }
 
     initiateMultiPartsUpload = async (userId, uploadDate) => {
@@ -39,6 +40,14 @@ export class UploadMultiPartsService {
             );
 
             console.log(`비디오 업로드 성공: ${videoS3Key}`);
+
+            // RabbitMQ로 인코딩 작업 메시지 전송
+            await this.rabbitMQProducerService.sendMessage({
+                userId,
+                s3Key: videoS3Key,
+                s3Url: videoS3Url,
+            });
+
         } catch (error) {
             // --- 롤백(Rollback) ---
             console.error("업로드 완료 처리 중 에러 발생. 롤백 시도.", error);

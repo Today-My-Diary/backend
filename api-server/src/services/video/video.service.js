@@ -32,4 +32,25 @@ export class VideoService {
         const now = new Date();
         return now.toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }).split(' ')[0];
     }
+
+    async handleEncodedVideo(msgContent) {
+        const { userId, originalS3Key, encodedS3Url } = msgContent;
+
+        console.log(`[API Server] Received completion for: ${originalS3Key}`);
+
+        try {
+            // DB 업데이트
+            await this.videoRepository.updateEncodingResult(
+                userId,
+                originalS3Key,
+                {
+                    encodedUrl: encodedS3Url,
+                    status: 'COMPLETE'
+                }
+            );
+            console.log(`DB Updated for User ${userId}`);
+        } catch (error) {
+            console.error("DB Update Failed:", error);
+        }
+    }
 }

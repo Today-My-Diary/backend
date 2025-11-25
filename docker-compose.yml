@@ -3,7 +3,6 @@ version: '3.8'
 services:
   # RabbitMQ 서비스
   harufilm-rabbitmq:
-    # 'management' 태그가 관리자 UI 페이지를 포함합니다.
     image: rabbitmq:3-management-alpine
     container_name: 'harufilm-rabbitmq'
     ports:
@@ -11,6 +10,15 @@ services:
       - '5672:5672'
       # 15672: 관리자 웹 UI 포트 (http://localhost:15672)
       - '15672:15672'
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    # RabbitMQ가 완전히 부팅되었는지 확인하는 헬스체크 (순서 보장용)
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - harufilm_network
 
@@ -22,7 +30,8 @@ services:
     ports:
       - '3000:3000'
     depends_on:
-      - harufilm-rabbitmq
+      harufilm-rabbitmq:
+        condition: service_healthy
     networks:
       - harufilm_network
     env_file:
@@ -34,7 +43,8 @@ services:
       context: ./encoding-server
     container_name: 'harufilm-encoding-server'
     depends_on:
-      - harufilm-rabbitmq
+      harufilm-rabbitmq:
+        condition: service_healthy
     networks:
       - harufilm_network
     env_file:
