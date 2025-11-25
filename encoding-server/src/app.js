@@ -5,6 +5,7 @@ import cors from 'cors';
 
 import encodingRouter from './routes/encoding.router.js';
 import healthRouter from "./routes/health.router.js";
+import { rabbitMQProducerService, rabbitMQConsumerService, encodingBusiness } from './container.js';
 import { errorHandler } from './middlewares/error-handler.middleware.js';
 
 const app = express();
@@ -16,6 +17,10 @@ const corsOptions = {
     credentials: true,
 }
 
+await rabbitMQProducerService.connect();
+await rabbitMQConsumerService.consume(encodingBusiness.handleEncoding.bind(encodingBusiness));
+
+BigInt.prototype.toJSON = function() { return this.toString(); }
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors(corsOptions));

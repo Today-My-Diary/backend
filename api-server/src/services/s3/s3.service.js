@@ -74,12 +74,12 @@ export class S3Service {
         }
     }
 
-    // 영상 업로드용 S3 key 생성 (예: "videos/123/2025-11-07")
+    // 영상 업로드용 S3 key 생성 (예: "videos/123/2025-11-07.webm")
     generateVideoS3Key = (userId, uploadDate) => {
         return `videos/${userId}/${uploadDate}`;
     }
 
-    // 썸네일 전용 S3 Key 생성 (예: "thumbnails/123/2025-11-07")
+    // 썸네일 전용 S3 Key 생성 (예: "thumbnails/123/2025-11-07.jpg")
     generateThumbnailS3Key = (userId, uploadDate) => {
         return `thumbnails/${userId}/${uploadDate}`;
     }
@@ -99,7 +99,8 @@ export class S3Service {
 
         return new CreateMultipartUploadCommand({
             Bucket: this.s3BucketName,
-            Key: key
+            Key: key,
+            ContentType: 'video/webm'
         });
     };
 
@@ -138,6 +139,7 @@ export class S3Service {
         return new PutObjectCommand({
             Bucket: this.s3BucketName,
             Key: key,
+            ContentType: 'image/jpeg'
         });
     };
 }
