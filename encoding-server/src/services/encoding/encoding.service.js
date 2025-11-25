@@ -5,6 +5,10 @@ import os from "os";
 import fs from "fs";
 
 export class EncodingService {
+    constructor(ffmpegConfig){
+        this.ffmpegConfig = ffmpegConfig;
+    }
+
 
     async preparePaths(outputDir, filename) {
         const baseName = path.basename(filename);
@@ -89,11 +93,7 @@ export class EncodingService {
         });
     }
 
-    async transcodeMultipartHls(concatListPath, paths){
-        const decoderArgs = [
-            "-c:v", "libvpx-vp9"
-        ];
-
+    async transcodeHls(inputUrl, paths){
         for(const res of Object.keys(hlsProfiles)) {
             const profile = hlsProfiles[res];
 
@@ -102,12 +102,8 @@ export class EncodingService {
             const playlistPath = `${outputDir}/index.m3u8`;
             
             const args = [
-                "-protocol_whitelist", "file, http, https, tcp, tls",
-                "-f", "concat",
-                "-safe", "0",
-                "-i", concatListPath,
+                "-i", inputUrl,
 
-                ...decoderArgs,
                  "-c:v", this.ffmpegConfig.videoCodec,
                 "-preset", this.ffmpegConfig.preset,
                 "-crf", String(this.ffmpegConfig.crf),
@@ -162,7 +158,7 @@ export class EncodingService {
 
     async cleanupWorkspace(workspace){
         try{
-            await fs.rm(workspace, { recursive: true, force: true });
+            await fs.promises.rm(workspace, { recursive: true, force: true });
         }
         catch(err){
             console.log("cleanupWorkspace error: ", err.message);
