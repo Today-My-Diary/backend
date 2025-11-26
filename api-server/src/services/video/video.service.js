@@ -53,4 +53,17 @@ export class VideoService {
             console.error("DB Update Failed:", error);
         }
     }
+
+    async getVideoByDate(userId, date) {
+        const video = await this.videoRepository.findByDateWithTimestamps(userId, date);
+        if (!video) {
+            return { s3Url: null, encoded: false, timestamps: [] };
+        }
+
+        return {
+            s3Url: video.s3Url,
+            encoded: video.status === 'COMPLETE',
+            timestamps: video.timestamps || []
+        };
+    }
 }

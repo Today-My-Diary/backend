@@ -23,4 +23,14 @@ export class VideoController {
             res.status(400).json({ error: error.message });
         }
     };
+
+    // GET /api/videos/:date
+    getVideoByDate = async (req, res) => {
+        try {
+            const video = await this.videoBusiness.getVideoByDate(req.user.userId, req.params.date);
+            res.status(200).json(video);
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    }
 }

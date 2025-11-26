@@ -14,4 +14,8 @@ export class VideoBusiness {
     async handleEncodedVideo(msgContent) {
         return await this.videoService.handleEncodedVideo(msgContent);
     }
+
+    async getVideoByDate(userId, date) {
+        return await this.videoService.getVideoByDate(userId, date);
+    }
 }
