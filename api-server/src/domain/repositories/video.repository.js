@@ -15,7 +15,6 @@ export class VideoRepository {
 
     async upsertByDate(userId, uploadDate, data) {
         const userBigIntId = BigInt(userId);
-
         const cleanDate = uploadDate.split('T')[0];
 
         try {
@@ -42,7 +41,7 @@ export class VideoRepository {
         }
     }
 
-    // userId, uploadDate 로 단일 비디오 조회
+    // userId, uploadDate 로 단일 비디오 조회  ( timestamp 포함 X )
     async findByDate(userId, uploadDate) {
         try {
             return await this.prisma.video.findFirst({
@@ -50,6 +49,36 @@ export class VideoRepository {
                     userId: BigInt(userId),
                     uploadDate: {
                         startsWith: uploadDate
+                    }
+                },
+                select: {
+                    videoId: true,
+                    s3Url: true
+                },
+            });
+        } catch (error) {
+            console.error("VideoRepository findByDate 에러:", error);
+            throw new Error("데이터베이스에서 비디오 정보를 조회할 수 없습니다.");
+        }
+    }
+
+    // userId, uploadDate 로 단일 비디오 조회 ( timestamp 포함 O )
+    async findByDateWithTimestamps(userId, targetDate) {
+        try {
+            return await this.prisma.video.findFirst({
+                where: {
+                    userId: BigInt(userId),
+                    uploadDate: {
+                        startsWith: targetDate
+                    }
+                },
+                include: {
+                    timestamps: {
+                        orderBy: { time: 'asc' },
+                        select: {
+                            time: true,
+                            label: true
+                        }
                     }
                 }
             });
@@ -120,28 +149,26 @@ export class VideoRepository {
             const randomIds = shuffledIds.slice(0, limit);
 
             // 뽑힌 ID 3개에 대해 비디오 정보와 timestamps 조회
-            return await this.prisma.video.findMany({
+            const rows = await this.prisma.video.findMany({
                 where: {
                     videoId: {
                         in: randomIds
                     }
                 },
-                select: {
-                    videoId: true,
-                    uploadDate: true,
-                    thumbnailS3Url: true,
+                include: {
                     timestamps: {
-                        select: {
-                            time: true,
-                            label: true
-                        },
-                        orderBy: {
-                            time: 'asc'
-                        }
+                        orderBy: { time: 'asc' },
+                        select: { time: true, label: true }
                     }
                 }
             });
 
+            return rows.map(r => ({
+                videoId: r.videoId,
+                uploadDate: r.uploadDate,
+                thumbnailS3Url: r.thumbnailS3Url,
+                timestamps: r.timestamps
+            }));
         } catch (error) {
             console.error("VideoRepository findRandomPastVideos 에러:", error);
             throw new Error("랜덤 비디오 조회에 실패했습니다.");
