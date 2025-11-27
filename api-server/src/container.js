@@ -51,12 +51,12 @@ const authService = new AuthService();
 export const s3Service = new S3Service(s3Client, s3BucketName);
 export const tokenService = new TokenService();
 export const userService = new UserService(userRepository);
+export const rabbitMQProducerService = new RabbitMQProducerService();
+export const rabbitMQConsumerService = new RabbitMQConsumerService();
 export const uploadMultiPartsService = new UploadMultiPartsService(s3Service, videoRepository, rabbitMQProducerService)
 export const uploadThumbnailsService = new UploadThumbnailsService(s3Service, videoRepository)
 const videoService = new VideoService(videoRepository);
 const fcmService = new FcmService(tokenRepository);
-export const rabbitMQProducerService = new RabbitMQProducerService();
-export const rabbitMQConsumerService = new RabbitMQConsumerService();
 
 // Scheduler
 export const notificationScheduler = new NotificationScheduler(videoRepository, tokenRepository, fcmService);
