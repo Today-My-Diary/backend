@@ -57,8 +57,11 @@ export class AuthController {
     }
 
     // POST /api/auth/logout
-    logout(req, res, next) {
+    async logout(req, res, next) {
         try {
+            const { fcmToken } = req.body;
+            await this.authBusiness.processLogout(req.user?.userId, fcmToken);
+
             res.clearCookie('refreshToken', {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',

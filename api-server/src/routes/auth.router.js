@@ -1,6 +1,7 @@
 import express from 'express';
 
 import { authController } from '../container.js';
+import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
@@ -14,6 +15,6 @@ router.get('/google/callback', authController.handleGoogleCallback.bind(authCont
 router.post('/reissue', authController.reissueAccessToken.bind(authController));
 
 // POST /api/auth/logout
-router.post('/logout', authController.logout.bind(authController));
+router.post('/logout', authMiddleware, authController.logout.bind(authController));
 
 export default router;
