@@ -14,6 +14,9 @@ model User {
 
   // User-Video 1:N
   videos    Video[]
+
+  // User-Token 1:N (한 유저가 여러 기기 사용 가능)
+  tokens    Token[]
 }
 
 enum VideoStatus {
@@ -35,7 +38,7 @@ model Video {
   thumbnailS3Url String?
 
   // User-Video FK
-  user        User      @relation(fields: [userId], references: [userId])
+  user        User      @relation(fields: [userId], references: [userId], onDelete: Cascade)
   userId      BigInt
 
   // Timestamp-Video N:1
@@ -51,6 +54,18 @@ model Timestamp {
   label         String
 
   // Timestamp-Video FK
-  video         Video    @relation(fields: [videoId], references: [videoId])
+  video         Video    @relation(fields: [videoId], references: [videoId], onDelete: Cascade)
   videoId       BigInt
+}
+
+model Token {
+  tokenId     BigInt   @id @default(autoincrement())
+  tokenValue  String   @unique
+
+  // User-Token FK
+  user        User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  userId      BigInt
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

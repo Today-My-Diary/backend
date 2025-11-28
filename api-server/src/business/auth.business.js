@@ -1,9 +1,10 @@
 export class AuthBusiness {
 
-    constructor(authService, userService, tokenService) {
+    constructor(authService, userService, tokenService, fcmService) {
         this.authService = authService;
         this.userService = userService;
         this.tokenService = tokenService;
+        this.fcmService = fcmService;
     }
 
     getGoogleLoginUrl() {
@@ -26,5 +27,11 @@ export class AuthBusiness {
 
         const user = await this.userService.findUserById(payload.userId);
         return this.tokenService.generateAccessToken(user);
+    }
+
+    async processLogout(userId, fcmToken) {
+        if (fcmToken && userId) {
+            await this.fcmService.removeDeviceToken(userId, fcmToken);
+        }
     }
 }
