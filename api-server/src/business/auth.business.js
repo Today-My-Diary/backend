@@ -31,7 +31,7 @@ export class AuthBusiness {
 
     async processLogout(userId, fcmToken) {
         if (fcmToken && userId) {
-            await this.fcmService.processLogout(userId, fcmToken);
+            await this.fcmService.removeDeviceToken(userId, fcmToken);
         }
     }
 }
