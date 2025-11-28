@@ -8,7 +8,8 @@ import authRouter from './routes/auth.router.js';
 import uploadMultiPartsRouter from "./routes/upload.multi-parts.router.js";
 import uploadThumbnailsRouter from "./routes/upload.thumbnails.router.js";
 import videoRouter from "./routes/video.router.js";
-import { rabbitMQProducerService, rabbitMQConsumerService, videoBusiness } from './container.js';
+import fcmRouter from "./routes/fcm.router.js";
+import { rabbitMQProducerService, rabbitMQConsumerService, videoBusiness, notificationScheduler } from './container.js';
 
 const app = express();
 
@@ -18,6 +19,8 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
 }
+
+notificationScheduler.init();
 
 await rabbitMQProducerService.connect();
 await rabbitMQConsumerService.consume(videoBusiness.handleEncodedVideo.bind(videoBusiness));
@@ -29,8 +32,9 @@ app.use(cors(corsOptions));
 
 app.use('/api/auth', authRouter);
 app.use('/api/uploads/multi-parts', uploadMultiPartsRouter);
-app.use('/api/uploads/thumbnails', uploadThumbnailsRouter)
-app.use('/api/videos', videoRouter)
+app.use('/api/uploads/thumbnails', uploadThumbnailsRouter);
+app.use('/api/videos', videoRouter);
+app.use('/api/fcm', fcmRouter);
 
 app.use(errorHandler);
 

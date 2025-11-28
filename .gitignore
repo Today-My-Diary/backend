@@ -33,3 +33,4 @@ encoding-server/routes/health.router.js
 /tmp
 /**/*.ts
 /**/*.m3u8
+api-server/haru-film-firebase.json
