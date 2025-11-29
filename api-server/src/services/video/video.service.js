@@ -33,10 +33,22 @@ export class VideoService {
         return now.toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }).split(' ')[0];
     }
 
+    // S3 Key에서 uploadDate 추출 (format: "videos/{userId}/{uploadDate}/{filename}")
+    _extractUploadDateFromS3Key(s3Key) {
+        const parts = s3Key.split('/');
+        if (parts.length >= 3) {
+            return parts[2]; // YYYY-MM-DD
+        }
+        return this._getTodayKST();
+    }
+
     async handleEncodedVideo(msgContent) {
         const { userId, originalS3Key, encodedS3Url } = msgContent;
 
         console.log(`[API Server] Received completion for: ${originalS3Key}`);
+
+        // S3 Key에서 uploadDate 추출
+        const uploadDate = this._extractUploadDateFromS3Key(originalS3Key);
 
         try {
             // DB 업데이트
@@ -49,8 +61,20 @@ export class VideoService {
                 }
             );
             console.log(`DB Updated for User ${userId}`);
+
+            return {
+                userId,
+                uploadDate,
+                success: true
+            };
         } catch (error) {
             console.error("DB Update Failed:", error);
+            return {
+                userId,
+                uploadDate,
+                success: false,
+                error: error.message
+            };
         }
     }
 

@@ -1,6 +1,7 @@
 export class VideoBusiness {
-    constructor(videoService) {
+    constructor(videoService, fcmService) {
         this.videoService = videoService;
+        this.fcmService = fcmService;
     }
 
     async getMonthlyVideos(userId, year, month) {
@@ -12,7 +13,21 @@ export class VideoBusiness {
     }
 
     async handleEncodedVideo(msgContent) {
-        return await this.videoService.handleEncodedVideo(msgContent);
+        const { userId, status } = msgContent;
+
+        try {
+            const result = await this.videoService.handleEncodedVideo(msgContent);
+            const uploadDate = result.uploadDate;
+
+            if (status === 'SUCCESS') {
+                await this.fcmService.notifyEncodingSuccess(userId, uploadDate);
+            } else if (status === 'FAILURE') {
+                await this.fcmService.notifyEncodingFailure(userId, uploadDate);
+            }
+        } catch (error) {
+            console.error('[VideoBusiness] handleEncodedVideo 에러:', error);
+            throw error;
+        }
     }
 
     async getVideoByDate(userId, date) {

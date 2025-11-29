@@ -67,7 +67,7 @@ export class NotificationScheduler {
                     }
 
                     // 알림 전송
-                    const result = await this.fcmService.sendDailyReminder(user.userId, questions);
+                    await this.fcmService.sendDailyReminder(user.userId, questions);
                 } catch (error) {
                     console.error(`[Scheduler] User ${user.userId}에 알림 전송 실패:`, error);
                 }
