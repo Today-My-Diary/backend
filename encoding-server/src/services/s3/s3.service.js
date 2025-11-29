@@ -102,19 +102,8 @@ export class S3Service {
         const videoKey = `${s3Prefix}/master.m3u8`;
 
         return {
-            success: true,
-            userId,
             videoKey,
             hlsUrl: masterUrl,
         };
-    }
-
-
-    createS3Key(userId, filename){
-        return `users/${userId}/videos/${Date.now()}_${filename}`;
-    }
-
-    createInputKey(inputPath) {
-        return inputPath.split(".amazonaws.com/")[1]?.split("?")[0] || "unknown";
     }
 }
