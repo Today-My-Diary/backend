@@ -195,4 +195,53 @@ export class VideoRepository {
             throw new Error("비디오 인코딩 결과를 업데이트할 수 없습니다.");
         }
     }
+
+    // KST 기준 오늘 날짜를 "YYYY-MM-DD" 문자열로 반환
+    _getTodayKST() {
+        const now = new Date();
+        return now.toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }).split(' ')[0];
+    }
+
+    // 오늘 영상을 업로드하지 않은 모든 사용자 조회
+    async findUsersWithoutTodayVideo() {
+        try {
+            const todayDate = this._getTodayKST();
+
+            // 모든 사용자 조회
+            const allUsers = await this.prisma.user.findMany({
+                select: {
+                    userId: true,
+                }
+            });
+
+            if (allUsers.length === 0) {
+                return [];
+            }
+
+            // 오늘 영상을 가진 사용자 조회
+            const usersWithTodayVideo = await this.prisma.video.findMany({
+                where: {
+                    uploadDate: {
+                        startsWith: todayDate
+                    }
+                },
+                select: {
+                    userId: true
+                },
+                distinct: ['userId']
+            });
+
+            const userIdsWithVideo = new Set(usersWithTodayVideo.map(v => v.userId.toString()));
+
+            // 오늘 영상 없는 사용자 필터링
+            const usersWithoutVideo = allUsers.filter(
+                user => !userIdsWithVideo.has(user.userId.toString())
+            );
+
+            return usersWithoutVideo;
+        } catch (error) {
+            console.error("VideoRepository findUsersWithoutTodayVideo 에러:", error);
+            throw new Error("사용자 정보를 조회할 수 없습니다.");
+        }
+    }
 }
