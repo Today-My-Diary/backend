@@ -59,13 +59,13 @@ const videoService = new VideoService(videoRepository);
 const fcmService = new FcmService(tokenRepository);
 
 // Scheduler
-export const notificationScheduler = new NotificationScheduler(videoRepository, tokenRepository, fcmService);
+export const notificationScheduler = new NotificationScheduler(videoRepository, tokenRepository, fcmService, s3Service);
 
 // Business
 const authBusiness = new AuthBusiness(authService, userService, tokenService, fcmService);
-const uploadMultiPartsBusiness = new UploadMultiPartsBusiness(uploadMultiPartsService);
+const uploadMultiPartsBusiness = new UploadMultiPartsBusiness(uploadMultiPartsService, fcmService);
 const uploadThumbnailsBusiness = new UploadThumbnailsBusiness(uploadThumbnailsService);
-export const videoBusiness = new VideoBusiness(videoService);
+export const videoBusiness = new VideoBusiness(videoService, fcmService);
 const fcmBusiness = new FcmBusiness(fcmService);
 
 // Controllers
