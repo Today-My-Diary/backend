@@ -27,21 +27,23 @@ export class EncodingBusiness {
 
             const { hlsUrl } = uploadResult;
 
-            // TODO: 응답 메시지 객체는 service에서 생성하도록 수정
-            const resultMetadata = {
-                userId: userId,
+            const resultMetadata = this.encodingService.buildSuccessMetadata({
+                userId,
                 originalS3Key: s3Key,
-                encodedS3Url: hlsUrl,
-                status: 'COMPLETE'
-            };
+                hlsUrl
+            })
 
             await this.rabbitMQProducerService.sendMessage(resultMetadata);
             console.log(`[Encoding Finished] Result sent to API Server`);
 
         } catch (error) {
             console.error(`[Encoding Failed] User: ${userId}, File: ${s3Key}`, error);
-            // TODO: 인코딩 실패 시 API 서버에 'FAILED' 상태를 알려주는 로직 작성
-            //       예시 : this.rabbitMQProducerService.sendMessage({ ..., status: 'FAILED' });
+            const failMetadata = this.encodingService.buildFailMetadata({
+                userId,
+                originalS3Key: s3Key,
+            });
+
+            await this.rabbitMQProducerService.sendMessage(failMetadata);
         } finally {
             if(workspace){
                 console.log(`Cleaning up workspace: ${workspace}`);

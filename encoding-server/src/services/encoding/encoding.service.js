@@ -132,6 +132,24 @@ export class EncodingService {
         await fs.promises.writeFile(paths.masterPlaylist, lines.join("\n"));
     }
 
+    buildSuccessMetadata({ userId, originalS3Key, hlsUrl }){
+        return {
+            userId,
+            originalS3Key,
+            encodedS3Url: hlsUrl,
+            status: 'COMPLETE'
+        }
+    }
+
+    buildFailMetadata({ userId, originalS3Key }) {
+        return {
+            userId,
+            originalS3Key,
+            encodedS3Url: null,
+            status: 'FAILED'
+        };
+    }
+
     async cleanupWorkspace(workspace){
         try{
             await fs.promises.rm(workspace, { recursive: true, force: true });
