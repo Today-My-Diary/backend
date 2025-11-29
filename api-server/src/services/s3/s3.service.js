@@ -3,7 +3,8 @@ import {
     UploadPartCommand,
     CompleteMultipartUploadCommand,
     DeleteObjectCommand,
-    PutObjectCommand
+    PutObjectCommand,
+    GetObjectCommand
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
@@ -142,4 +143,30 @@ export class S3Service {
             ContentType: 'image/jpeg'
         });
     };
+
+    /**
+     * S3에서 오늘의 질문 파일 로드
+     * @param {number} day - 날짜 (1-31)
+     * @returns {Promise<string[]>} 질문 배열
+     */
+    async loadDailyQuestions(day) {
+        try {
+            const paddedDay = String(day).padStart(2, '0');
+            const key = `questions/day${paddedDay}.json`;
+
+            const command = new GetObjectCommand({
+                Bucket: this.s3BucketName,
+                Key: key
+            });
+
+            const response = await this.s3Client.send(command);
+            const bodyString = await response.Body.transformToString();
+            const data = JSON.parse(bodyString);
+
+            return data.questions || [];
+        } catch (error) {
+            console.error(`[S3Service] 질문 파일 로드 실패 (day: ${day}):`, error);
+            return null;
+        }
+    }
 }
