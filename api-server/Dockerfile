@@ -27,7 +27,7 @@ RUN npm install --omit=dev
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/server.js ./server.js
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/haru-film-firebase.json ./haru-film-firebase.json
+COPY --from=builder /app/haru-film-firebase.json haru-film-firebase.json
 
 # Prisma 클라이언트 복사
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
