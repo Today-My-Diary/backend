@@ -59,8 +59,9 @@ export class S3Service {
         }
     }
 
-    async uploadDirectory(localDir, s3Prefix){
+    async uploadDirectory(localDir, userId, jobId){
         const files = await this._readRecursive(localDir);
+        const s3Prefix = `users/${userId}/videos/${jobId}`;
 
         for(const filePath of files){
             const relativePath = path.relative(localDir, filePath).replace(/\\/g, "/");
@@ -91,30 +92,5 @@ export class S3Service {
         }
 
         return results;
-    }
-
-    async uploadAndBuildResponse({ workspace, userId, jobId }) {
-        const s3Prefix = `users/${userId}/videos/${jobId}`;
-        const masterLocalPath = `${workspace}/master.m3u8`;
-        
-        const masterUrl = await this.uploadDirectory(workspace, s3Prefix);
-
-        const videoKey = `${s3Prefix}/master.m3u8`;
-
-        return {
-            success: true,
-            userId,
-            videoKey,
-            hlsUrl: masterUrl,
-        };
-    }
-
-
-    createS3Key(userId, filename){
-        return `users/${userId}/videos/${Date.now()}_${filename}`;
-    }
-
-    createInputKey(inputPath) {
-        return inputPath.split(".amazonaws.com/")[1]?.split("?")[0] || "unknown";
     }
 }
