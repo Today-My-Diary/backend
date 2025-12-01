@@ -10,20 +10,6 @@ export class EncodingService {
     }
 
 
-    async preparePaths(outputDir, filename) {
-        const baseName = path.basename(filename);
-        const safeNameRegex = /^[A-Za-z0-9._-]{1,255}$/;
-
-        if(!safeNameRegex.test(baseName)) {
-            throw new Error("파일 이름에 허용되지 않는 문자가 있거나 길이가 초과됨");
-        }
-
-        const tempInputPath = path.join(outputDir, `temp_${Date.now()}_${baseName}`);
-        const outputPath = path.resolve(outputDir, baseName);
-
-        return { tempInputPath, outputPath };
-    }
-
     async prepareWorkspace(userId){
         const baseTempDir = path.join(os.tmpdir(), "encoding");
         
@@ -43,7 +29,7 @@ export class EncodingService {
         return { workspace, jobId };
     }
 
-    getHlsPaths(workspace, filename) {
+    getHlsPaths(workspace) {
         const paths = {
             concatList: path.join(workspace, "input", "input.txt"),
             masterPlaylist: path.join(workspace, "master.m3u8"),
@@ -55,16 +41,6 @@ export class EncodingService {
         }
         
         return paths;
-    }
-
-    async generateConcatList(paths, parts) {
-        const lines = parts
-            .sort((a, b) => a.partNumber - b.partNumber)
-            .map(p => `file '${p.presignedUrl}'`)
-            .join("\n");
-
-        await fs.promises.writeFile(paths.concatList, lines);
-        return paths.concatList;
     }
 
     runFfmpeg(args, logFile){

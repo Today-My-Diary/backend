@@ -18,9 +18,6 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm install --omit=dev
 
-COPY --from=builder /app/src ./src
-COPY --from=builder /app/server.js ./server.js
+COPY --from=builder /app/src ./
 
-EXPOSE 3001
-
-CMD ["node", "server.js"]
+CMD ["node", "worker.js"]

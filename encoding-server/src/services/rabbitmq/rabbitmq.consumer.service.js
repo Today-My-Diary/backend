@@ -12,11 +12,33 @@ export class RabbitMQConsumerService {
         this.routingKey = 'video.encoding';
     }
 
+    async setupEventHandlers() {
+        if (this.connection) {
+            this.connection.on("close", () => {
+                console.error("[RabbitMQ Consumer] connection closed. Reconnecting...");
+                setTimeout(() => this.connect(), 3000);
+            });
+
+            this.connection.on("error", (err) => {
+                console.error("[RabbitMQ Consumer] connection error:", err.message);
+            });
+        }
+
+        if (this.channel) {
+            this.channel.on("close", () => {
+                console.error("[RabbitMQ Consumer] channel closed. Reconnecting...");
+                setTimeout(() => this.connect(), 3000);
+            });
+        }
+    }
+
     // 연결 설정
     async connect() {
         try {
             this.connection = await amqp.connect(this.rabbitMQUrl);
             this.channel = await this.connection.createChannel();
+
+            await this.setupEventHandlers();
 
             // Exchange & Queue 선언 및 바인딩
             await this.channel.assertExchange(this.exchangeName, this.exchangeType, { durable: true });
@@ -26,9 +48,9 @@ export class RabbitMQConsumerService {
             // Prefetch: 한 번에 하나씩만 처리
             this.channel.prefetch(1);
 
-            console.log('RabbitMQ Consumer Connected (Service Ready)');
+            console.log('[RabbitMQ Consumer] RabbitMQ Consumer Connected (Service Ready)');
         } catch (error) {
-            console.error('Failed to connect to RabbitMQ', error);
+            console.error('Failed to connect to RabbitMQ (consumer)', error);
             setTimeout(() => this.connect(), 5000);
         }
     }
@@ -41,8 +63,12 @@ export class RabbitMQConsumerService {
         if (!this.channel) {
             await this.connect();
         }
+        if (!this.channel) {
+            console.error("[RabbitMQConsumer] Channel is not ready yet. Retry later...");
+            return;
+        }
 
-        console.log(`Waiting for messages in ${this.queueName}...`);
+        console.log(`[RabbitMQ Consumer] Waiting for messages in ${this.queueName}...`);
 
         this.channel.consume(this.queueName, async (msg) => {
             if (!msg) return;
@@ -56,7 +82,7 @@ export class RabbitMQConsumerService {
                 // 성공 시 Ack
                 this.channel.ack(msg);
             } catch (error) {
-                console.error('Error processing message:', error);
+                console.error('[RabbitMQ Consumer] Error processing message:', error);
                 // 실패 시 Nack
                 this.channel.nack(msg, false, false);
             }
