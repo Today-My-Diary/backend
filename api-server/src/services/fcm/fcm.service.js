@@ -23,8 +23,9 @@ export class FcmService {
      * 사용자에게 알림 전송 (다중 기기)
      * @param {BigInt|number|string} userId - 사용자 ID
      * @param {object} notification - 알림 객체 { title, body }
+     * @param {string} originalDate - 원본 날짜 (YYYY-MM-DD 형식)
      */
-    async sendNotificationToUser(userId, notification) {
+    async sendNotificationToUser(userId, notification, originalDate = null) {
         try {
             // 사용자의 모든 토큰 조회
             const tokens = await this.tokenRepository.findByUserId(userId);
@@ -35,7 +36,7 @@ export class FcmService {
             }
 
             const tokenValues = tokens.map(t => t.tokenValue);
-            await this.sendNotificationToDevices(tokenValues, notification);
+            await this.sendNotificationToDevices(tokenValues, notification, originalDate);
         } catch (error) {
             console.error(`[FCM] sendNotificationToUser 에러 (userId: ${userId}):`, error);
             throw error;
@@ -47,8 +48,9 @@ export class FcmService {
      * Firebase의 sendMulticast
      * @param {string[]} tokens - FCM 토큰 배열
      * @param {object} notification - 알림 객체
+     * @param {string} originalDate - 원본 날짜 (YYYY-MM-DD 형식)
      */
-    async sendNotificationToDevices(tokens, notification) {
+    async sendNotificationToDevices(tokens, notification, originalDate = null) {
         if (!tokens || tokens.length === 0) {
             console.log('[FCM] 전송할 토큰이 없습니다.');
             return;
@@ -63,7 +65,13 @@ export class FcmService {
                 webpush: {
                     notification: {
                         title: notification.title,
-                        body: notification.body
+                        body: notification.body,
+                        icon: 'https://haru-film-bucket.s3.ap-northeast-2.amazonaws.com/icons/logo_icon.png',
+                    },
+                    fcmOptions: {
+                        link: originalDate
+                            ? `${process.env.FRONTEND_URL}/videos/${originalDate}`
+                            : process.env.FRONTEND_URL
                     }
                 }
             };
@@ -126,7 +134,7 @@ export class FcmService {
                 body: `✅ ${formattedDate} 영상 업로드에 성공했습니다.`
             };
 
-            await this.sendNotificationToUser(userId, notification);
+            await this.sendNotificationToUser(userId, notification, uploadDate);
         } catch (error) {
             console.error(`[FCM] notifyUploadSuccess 에러 (userId: ${userId}):`, error);
             throw error;
@@ -142,7 +150,7 @@ export class FcmService {
                 body: `❌ ${formattedDate} 영상 업로드에 실패했습니다.`
             };
 
-            await this.sendNotificationToUser(userId, notification);
+            await this.sendNotificationToUser(userId, notification, uploadDate);
         } catch (error) {
             console.error(`[FCM] notifyUploadFailure 에러 (userId: ${userId}):`, error);
             throw error;
@@ -158,7 +166,7 @@ export class FcmService {
                 body: `✅ ${formattedDate} 영상 인코딩에 성공했습니다.`
             };
 
-            await this.sendNotificationToUser(userId, notification);
+            await this.sendNotificationToUser(userId, notification, uploadDate);
         } catch (error) {
             console.error(`[FCM] notifyEncodingSuccess 에러 (userId: ${userId}):`, error);
             throw error;
@@ -174,7 +182,7 @@ export class FcmService {
                 body: `❌ ${formattedDate} 영상 인코딩에 실패했습니다.`
             };
 
-            await this.sendNotificationToUser(userId, notification);
+            await this.sendNotificationToUser(userId, notification, uploadDate);
         } catch (error) {
             console.error(`[FCM] notifyEncodingFailure 에러 (userId: ${userId}):`, error);
             throw error;

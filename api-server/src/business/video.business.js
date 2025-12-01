@@ -13,13 +13,13 @@ export class VideoBusiness {
     }
 
     async handleEncodedVideo(msgContent) {
-        const { userId, status } = msgContent;
-
         try {
-            const result = await this.videoService.handleEncodedVideo(msgContent);
-            const uploadDate = result.uploadDate;
+            if (msgContent.status === 'COMPLETE') {
+                await this.videoService.handleEncodedVideo(msgContent);
+            }
+            const uploadDate = this.videoService.extractUploadDateFromS3Key(msgContent.originalS3Key)
 
-            this._sendEncodingNotification(userId, uploadDate, status);
+            this._sendEncodingNotification(msgContent.userId, uploadDate, msgContent.status);
         } catch (error) {
             // DB 업데이트 실패는 throw (RabbitMQ nack)
             console.error('[VideoBusiness] 비디오 처리 에러:', error);
@@ -30,10 +30,10 @@ export class VideoBusiness {
     // 비동기 알림 전송 (DB 업데이트와 독립적)
     async _sendEncodingNotification(userId, uploadDate, status) {
         try {
-            if (status === 'SUCCESS') {
+            if (status === 'COMPLETE') {
                 console.log(`[VideoBusiness] 인코딩 성공 알림 전송 (userId: ${userId}, uploadDate: ${uploadDate})`);
                 await this.fcmService.notifyEncodingSuccess(userId, uploadDate);
-            } else if (status === 'FAILURE') {
+            } else if (status === 'FAILED') {
                 console.log(`[VideoBusiness] 인코딩 실패 알림 전송 (userId: ${userId}, uploadDate: ${uploadDate})`);
                 await this.fcmService.notifyEncodingFailure(userId, uploadDate);
             }
