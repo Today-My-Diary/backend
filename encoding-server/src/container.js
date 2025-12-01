@@ -9,6 +9,9 @@ import { RabbitMQConsumerService } from "./services/rabbitmq/rabbitmq.consumer.s
 // Business
 import { EncodingBusiness } from './business/encoding.business.js';
 
+// Config
+import { ffmpegConfig } from './services/encoding/ffmpeg.config.js';
+
 
 const s3Client = new S3Client({
     region: process.env.AWS_REGION,
@@ -17,11 +20,10 @@ const s3Client = new S3Client({
 // 의존성 조립 (Bottom-Up)
 const s3Bucket = process.env.S3_BUCKET_NAME;
 const awsRegion = process.env.AWS_REGION;
-const apiServer = process.env.API_SERVER_URL;
 
 // Services
 export const s3Service = new S3Service(s3Client, s3Bucket, awsRegion);
-const encodingService = new EncodingService();
+const encodingService = new EncodingService(ffmpegConfig);
 export const rabbitMQProducerService = new RabbitMQProducerService();
 export const rabbitMQConsumerService = new RabbitMQConsumerService();
 
