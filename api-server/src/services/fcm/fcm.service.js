@@ -84,7 +84,7 @@ export class FcmService {
                 const batchTokens = tokens.slice(i, i + batchSize);
 
                 try {
-                    const response = await admin.messaging().sendMulticast({
+                    const response = await admin.messaging().sendEachForMulticast({
                         tokens: batchTokens,
                         ...message
                     });
