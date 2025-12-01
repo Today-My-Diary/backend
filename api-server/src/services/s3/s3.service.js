@@ -77,12 +77,12 @@ export class S3Service {
 
     // 영상 업로드용 S3 key 생성 (예: "videos/123/2025-11-07.webm")
     generateVideoS3Key = (userId, uploadDate) => {
-        return `videos/${userId}/${uploadDate}`;
+        return `videos/${userId}/${uploadDate}.webm`;
     }
 
     // 썸네일 전용 S3 Key 생성 (예: "thumbnails/123/2025-11-07.jpg")
     generateThumbnailS3Key = (userId, uploadDate) => {
-        return `thumbnails/${userId}/${uploadDate}`;
+        return `thumbnails/${userId}/${uploadDate}.jpg`;
     }
 
     getS3Url = async (s3Key) => {

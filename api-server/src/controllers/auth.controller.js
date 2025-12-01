@@ -59,7 +59,7 @@ export class AuthController {
     // POST /api/auth/logout
     async logout(req, res, next) {
         try {
-            const { fcmToken } = req.body;
+            const { fcmToken } = req.body || {};
             await this.authBusiness.processLogout(req.user?.userId, fcmToken);
 
             res.clearCookie('refreshToken', {

@@ -34,7 +34,7 @@ export class VideoService {
     }
 
     // S3 Key에서 uploadDate 추출 (format: "videos/{userId}/{uploadDate}/{filename}")
-    _extractUploadDateFromS3Key(s3Key) {
+    extractUploadDateFromS3Key(s3Key) {
         const parts = s3Key.split('/');
         if (parts.length >= 3) {
             return parts[2]; // YYYY-MM-DD
@@ -48,7 +48,7 @@ export class VideoService {
         console.log(`[API Server] Received completion for: ${originalS3Key}`);
 
         // S3 Key에서 uploadDate 추출
-        const uploadDate = this._extractUploadDateFromS3Key(originalS3Key);
+        const uploadDate = this.extractUploadDateFromS3Key(originalS3Key);
 
         try {
             // DB 업데이트
