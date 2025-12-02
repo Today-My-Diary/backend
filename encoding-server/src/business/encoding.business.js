@@ -31,7 +31,7 @@ export class EncodingBusiness {
             await this.encodingService.generateMasterPlaylist(paths);
             
             console.log(`[UPLOAD uploading to S3`);
-            const hlsUrl = await this.s3Service.uploadDirectory({ workspace, userId, jobId });
+            const hlsUrl = await this.s3Service.uploadDirectory( workspace, userId, jobId );
 
             console.log(`[SUCCESS] building success metadata`);
             const successMetadata = {
