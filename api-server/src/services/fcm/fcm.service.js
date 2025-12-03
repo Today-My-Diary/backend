@@ -36,7 +36,7 @@ export class FcmService {
             }
 
             const tokenValues = tokens.map(t => t.tokenValue);
-            await this.sendNotificationToDevices(tokenValues, notification, originalDate);
+            await this.sendNotificationToTokensBatch(tokenValues, notification, originalDate);
         } catch (error) {
             console.error(`[FCM] sendNotificationToUser 에러 (userId: ${userId}):`, error);
             throw error;
@@ -132,88 +132,6 @@ export class FcmService {
         }
     }
 
-    /**
-     * 다중 토큰에 일괄 전송 (최대 500개씩 batch 전송)
-     * Firebase의 sendMulticast
-     * @param {string[]} tokens - FCM 토큰 배열
-     * @param {object} notification - 알림 객체
-     * @param {string} originalDate - 원본 날짜 (YYYY-MM-DD 형식)
-     */
-    async sendNotificationToDevices(tokens, notification, originalDate = null) {
-        if (!tokens || tokens.length === 0) {
-            console.log('[FCM] 전송할 토큰이 없습니다.');
-            return;
-        }
-
-        try {
-            const message = {
-                notification: {
-                    title: notification.title,
-                    body: notification.body
-                },
-                webpush: {
-                    notification: {
-                        title: notification.title,
-                        body: notification.body,
-                        icon: 'https://haru-film-bucket.s3.ap-northeast-2.amazonaws.com/icons/logo_icon.png',
-                    },
-                    fcmOptions: {
-                        link: originalDate
-                            ? `${process.env.FRONTEND_URL}/videos/${originalDate}`
-                            : process.env.FRONTEND_URL
-                    }
-                }
-            };
-
-            // Firebase의 sendMulticast 사용 (최대 500개 토큰)
-            const batchSize = 500;
-            const invalidTokens = [];
-
-            for (let i = 0; i < tokens.length; i += batchSize) {
-                const batchTokens = tokens.slice(i, i + batchSize);
-
-                try {
-                    const response = await admin.messaging().sendEachForMulticast({
-                        tokens: batchTokens,
-                        ...message
-                    });
-
-                    console.log(`[FCM] 배치 전송 완료 (${i}-${Math.min(i + batchSize, tokens.length)}) - 성공: ${response.successCount}, 실패: ${response.failureCount}`);
-
-                    // 실패한 토큰 처리 (무효한 토큰 삭제)
-                    response.responses.forEach((resp, idx) => {
-                        if (!resp.success) {
-                            const error = resp.error;
-                            // 토큰 무효화 에러 처리
-                            if (error.code === 'messaging/invalid-registration-token' ||
-                                error.code === 'messaging/mismatched-credential' ||
-                                error.code === 'messaging/message-rate-exceeded') {
-                                invalidTokens.push(batchTokens[idx]);
-                            }
-                        }
-                    });
-                } catch (error) {
-                    console.error('[FCM] sendMulticast 배치 전송 에러:', error);
-                }
-            }
-
-            // 무효한 토큰 삭제
-            for (const token of invalidTokens) {
-                try {
-                    await this.tokenRepository.deleteByTokenValue(token);
-                    console.log(`[FCM] 무효한 토큰 삭제: ${token}`);
-                } catch (error) {
-                    console.error(`[FCM] 토큰 삭제 실패: ${token}`, error);
-                }
-            }
-
-            console.log(`[FCM] 전체 알림 전송 완료 - 대상: ${tokens.length}개, 무효: ${invalidTokens.length}개`);
-        } catch (error) {
-            console.error('[FCM] sendNotificationToDevices 에러:', error);
-            throw error;
-        }
-    }
-
     // 영상 업로드 성공 알림
     async notifyUploadSuccess(userId, uploadDate) {
         try {
@@ -274,29 +192,6 @@ export class FcmService {
             await this.sendNotificationToUser(userId, notification, uploadDate);
         } catch (error) {
             console.error(`[FCM] notifyEncodingFailure 에러 (userId: ${userId}):`, error);
-            throw error;
-        }
-    }
-
-    // 일일 리마인드 알림
-    async sendDailyReminder(userId, questions = []) {
-        try {
-            // 질문 목록을 본문에 포함시킬 텍스트로 변환
-            let questionText = '오늘의 질문 리스트:\n';
-            if (questions.length > 0) {
-                questionText += questions.map((q, idx) => `${idx + 1}. ${q}`).join('\n');
-            } else {
-                questionText += '오늘 영상을 촬영해보세요!';
-            }
-
-            const notification = {
-                title: '📹 오늘의 하루를 기록해보세요 📹',
-                body: questionText
-            };
-
-            await this.sendNotificationToUser(userId, notification);
-        } catch (error) {
-            console.error(`[FCM] sendDailyReminder 에러 (userId: ${userId}):`, error);
             throw error;
         }
     }
