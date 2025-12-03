@@ -167,7 +167,7 @@ export class VideoRepository {
                     s3Key: s3Key,
                 },
                 data: {
-                    s3Url: resultData.encodedUrl,
+                    s3Url: resultData.encodedS3Url,
                     status: resultData.status,
                 }
             });
