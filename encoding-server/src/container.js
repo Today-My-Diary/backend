@@ -23,7 +23,7 @@ const awsRegion = process.env.AWS_REGION;
 
 // Services
 export const s3Service = new S3Service(s3Client, s3Bucket, awsRegion);
-const encodingService = new EncodingService(ffmpegConfig);
+export const encodingService = new EncodingService(ffmpegConfig);
 export const rabbitMQProducerService = new RabbitMQProducerService();
 export const rabbitMQConsumerService = new RabbitMQConsumerService();
 
