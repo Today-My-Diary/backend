@@ -11,8 +11,8 @@ export class NotificationScheduler {
 
     init() {
         try {
-            // 매일 20시 (KST)에 실행
-            this.scheduledJob = schedule.scheduleJob('0 20 * * *', async () => {
+            // 10분 간격으로 실행
+            this.scheduledJob = schedule.scheduleJob('*/10 * * * *', async () => {
                 console.log('[Scheduler] 일일 리마인드 알림 작업 시작...');
                 try {
                     await this.sendDailyRemind();
@@ -21,7 +21,7 @@ export class NotificationScheduler {
                 }
             });
 
-            console.log('[Scheduler] NotificationScheduler 초기화 완료 - 매일 20:00에 알림 전송');
+            console.log('[Scheduler] NotificationScheduler 초기화 완료 - 10분 간격으로 알림 전송');
         } catch (error) {
             console.error('[Scheduler] NotificationScheduler init 에러:', error);
         }
