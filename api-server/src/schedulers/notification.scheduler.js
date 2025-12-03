@@ -64,7 +64,7 @@ export class NotificationScheduler {
                 }
             }
 
-            // 배치 알림 전송 (자동으로 500개씩 분할)
+            // 배치 알림 전송
             const notification = {
                 title: '📹 오늘의 하루를 기록해보세요 📹',
                 body: questions.map((q, idx) => `${idx + 1}. ${q}`).join('\n')

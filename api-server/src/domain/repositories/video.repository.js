@@ -202,28 +202,24 @@ export class VideoRepository {
         return now.toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }).split(' ')[0];
     }
 
-    // ✅ 개선: 오늘 영상을 업로드하지 않은 사용자 조회 (LEFT JOIN + 토큰 동시 조회)
+    // 오늘 영상을 업로드하지 않은 사용자 조회 (LEFT JOIN + 토큰 동시 조회)
     async findUsersWithoutTodayVideo() {
         try {
             const todayDate = this._getTodayKST();
 
-            // ✅ 1개 쿼리: LEFT JOIN으로 토큰까지 함께 조회
+            // LEFT JOIN으로 토큰까지 함께 조회
             const usersWithoutVideo = await this.prisma.user.findMany({
                 where: {
                     videos: {
                         none: {
-                            uploadDate: {
-                                startsWith: todayDate
-                            }
+                            uploadDate: { startsWith: todayDate }
                         }
                     }
                 },
                 select: {
                     userId: true,
-                    tokens: {  // ✅ 토큰도 함께 조회
-                        select: {
-                            tokenValue: true
-                        }
+                    tokens: {
+                        select: { tokenValue: true }
                     }
                 }
             });
