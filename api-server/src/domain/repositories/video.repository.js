@@ -202,41 +202,27 @@ export class VideoRepository {
         return now.toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }).split(' ')[0];
     }
 
-    // 오늘 영상을 업로드하지 않은 모든 사용자 조회
+    // 오늘 영상을 업로드하지 않은 사용자 조회 (LEFT JOIN + 토큰 동시 조회)
     async findUsersWithoutTodayVideo() {
         try {
             const todayDate = this._getTodayKST();
 
-            // 모든 사용자 조회
-            const allUsers = await this.prisma.user.findMany({
-                select: {
-                    userId: true,
-                }
-            });
-
-            if (allUsers.length === 0) {
-                return [];
-            }
-
-            // 오늘 영상을 가진 사용자 조회
-            const usersWithTodayVideo = await this.prisma.video.findMany({
+            // LEFT JOIN으로 토큰까지 함께 조회
+            const usersWithoutVideo = await this.prisma.user.findMany({
                 where: {
-                    uploadDate: {
-                        startsWith: todayDate
+                    videos: {
+                        none: {
+                            uploadDate: { startsWith: todayDate }
+                        }
                     }
                 },
                 select: {
-                    userId: true
-                },
-                distinct: ['userId']
+                    userId: true,
+                    tokens: {
+                        select: { tokenValue: true }
+                    }
+                }
             });
-
-            const userIdsWithVideo = new Set(usersWithTodayVideo.map(v => v.userId.toString()));
-
-            // 오늘 영상 없는 사용자 필터링
-            const usersWithoutVideo = allUsers.filter(
-                user => !userIdsWithVideo.has(user.userId.toString())
-            );
 
             return usersWithoutVideo;
         } catch (error) {
