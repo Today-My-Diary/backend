@@ -1,9 +1,8 @@
 import schedule from 'node-schedule';
 
 export class NotificationScheduler {
-    constructor(videoRepository, tokenRepository, fcmService, s3Service) {
+    constructor(videoRepository, fcmService, s3Service) {
         this.videoRepository = videoRepository;
-        this.tokenRepository = tokenRepository;
         this.fcmService = fcmService;
         this.s3Service = s3Service;
         this.scheduledJob = null;
@@ -70,7 +69,7 @@ export class NotificationScheduler {
                 body: questions.map((q, idx) => `${idx + 1}. ${q}`).join('\n')
             };
 
-            await this.fcmService.sendNotificationToTokensBatch(allTokens, notification);
+            await this.fcmService.sendNotificationToTokensBatch(allTokens, notification, '/my');
             console.log(`[Scheduler] sendDailyRemind 완료`);
         } catch (error) {
             console.error('[Scheduler] sendDailyRemind 에러:', error);
