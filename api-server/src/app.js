@@ -36,6 +36,15 @@ app.use('/api/uploads/thumbnails', uploadThumbnailsRouter);
 app.use('/api/videos', videoRouter);
 app.use('/api/fcm', fcmRouter);
 
+// 404 에러 핸들러
+app.use((req, res, next) => {
+    const error = new Error(`경로를 찾을 수 없습니다: ${req.originalUrl}`);
+    error.status = 404;
+    next(error);
+});
+
+// 전역 에러 핸들러 (기존 errorHandler 사용)
 app.use(errorHandler);
+
 
 export { app };
