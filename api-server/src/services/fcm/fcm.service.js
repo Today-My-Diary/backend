@@ -44,7 +44,7 @@ export class FcmService {
     }
 
     /**
-     * ✅ 새 메서드: 토큰 배열 기반 배치 알림 전송 (최대 500개씩 batch 전송)
+     * 토큰 배열 기반 배치 알림 전송 (최대 500개씩 batch 전송)
      * @param {string[]} tokens - FCM 토큰 배열
      * @param {object} notification - 알림 객체 { title, body }
      * @param {string} originalDate - 원본 날짜 (YYYY-MM-DD 형식, 선택)
@@ -114,7 +114,7 @@ export class FcmService {
                 }
             }
 
-            // ✅ 무효한 토큰 비동기 삭제 (성능에 영향 X)
+            // 실패한 토큰 처리 (무효한 토큰 삭제)
             for (const token of invalidTokens) {
                 this.tokenRepository.deleteByTokenValue(token)
                     .catch(error => {
