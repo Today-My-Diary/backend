@@ -55,6 +55,10 @@
 
 </details>
 
+## **🏗️ 시스템 아키텍처**
+
+<img src="/uploads/0b9d421c98b7de5c5d750eb52cec1f53/image.png"/>
+
 ## **📁 벡엔드 아키텍처**
 
 - **마이크로서비스 아키텍처**: API 서버와 Encoding 서버 분리
@@ -143,19 +147,14 @@ const authController = new AuthController(authBusiness);
 
 </details>
 
-## **🏗️ 서버 아키텍처**
-
-### **전체 시스템 구조**
-
-<img src="/uploads/0b9d421c98b7de5c5d750eb52cec1f53/image.png"  width="600" />
-
 ## **💾 데이터베이스 스키마**
 
 <img src="/uploads/878c0fdce7885d2c476059dd6ae9be58/image.png"  width="600" />
 
 ## **🔄 User Flow (사용자 흐름)**
 
-### 회원가입 플로우
+<details>
+<summary><h3>OAuth Google 소셜 로그인 플로우</h3></summary>
 
 ```mermaid
 sequenceDiagram
@@ -179,6 +178,8 @@ sequenceDiagram
     API->>DB: 10. FCM 토큰 저장
     API-->>Client: 11. JWT 토큰 반환
 ```
+
+</details>
 
 ### **비디오 업로드 및 인코딩 플로우**
 
@@ -216,9 +217,12 @@ sequenceDiagram
     Firebase-->>Client: 알림 수신
 ```
 
-### **FCM 푸시 알림 플로우**
+### FCM 푸시 알림 플로우
 
 <img src="/uploads/9a9feee76971276cc9eb26916b75f8da/image.png"  width="600" />
+
+<details>
+<summary><b>FCM 푸시 알림 플로우</b></summary>
 
 ```mermaid
 sequenceDiagram
@@ -240,6 +244,8 @@ sequenceDiagram
     FCM->>Client: 7. 푸시 알림 도착
 ```
 
+</details>
+
 ## **🔧 핵심 기술 스택**
 
 | **카테고리** | **기술** |
@@ -256,7 +262,7 @@ sequenceDiagram
 | **컨테이너화** | Docker, Docker Compose |
 
 <details>
-<summary><h3>API Server (`api-server/`) 주요 라이브러리 및 버전</h3></summary>
+<summary><h3>API Server 주요 라이브러리 및 버전</h3></summary>
 
 | **라이브러리** | **버전** | **용도** |
 | --- | --- | --- |
@@ -275,7 +281,7 @@ sequenceDiagram
 </details>
 
 <details>
-<summary><h3>Encoding Server (`encoding-server/`) 주요 라이브러리 및 버전</h3></summary>
+<summary><h3>Encoding Server 주요 라이브러리 및 버전</h3></summary>
 
 | **라이브러리** | **버전** | **용도** |
 | --- | --- | --- |
