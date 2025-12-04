@@ -147,11 +147,11 @@ const authController = new AuthController(authBusiness);
 
 ### **전체 시스템 구조**
 
-![image](/uploads/0b9d421c98b7de5c5d750eb52cec1f53/image.png)
+<img src="/uploads/0b9d421c98b7de5c5d750eb52cec1f53/image.png"  width="600" />
 
 ## **💾 데이터베이스 스키마**
 
-![image](/uploads/878c0fdce7885d2c476059dd6ae9be58/image.png)
+<img src="/uploads/878c0fdce7885d2c476059dd6ae9be58/image.png"  width="600" />
 
 ## **🔄 User Flow (사용자 흐름)**
 
@@ -218,7 +218,7 @@ sequenceDiagram
 
 ### **FCM 푸시 알림 플로우**
 
-![image](/uploads/9a9feee76971276cc9eb26916b75f8da/image.png)
+<img src="/uploads/9a9feee76971276cc9eb26916b75f8da/image.png"  width="600" />
 
 ```mermaid
 sequenceDiagram
