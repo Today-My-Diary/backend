@@ -23,9 +23,9 @@ export class FcmService {
      * 사용자에게 알림 전송 (다중 기기)
      * @param {BigInt|number|string} userId - 사용자 ID
      * @param {object} notification - 알림 객체 { title, body }
-     * @param {string} originalDate - 원본 날짜 (YYYY-MM-DD 형식)
+     * @param {string} linkPath - 알림 클릭 시 이동할 경로 (예: "/videos/2025-12-03")
      */
-    async sendNotificationToUser(userId, notification, originalDate = null) {
+    async sendNotificationToUser(userId, notification, linkPath = '/my') {
         try {
             // 사용자의 모든 토큰 조회
             const tokens = await this.tokenRepository.findByUserId(userId);
@@ -36,7 +36,7 @@ export class FcmService {
             }
 
             const tokenValues = tokens.map(t => t.tokenValue);
-            await this.sendNotificationToTokensBatch(tokenValues, notification, originalDate);
+            await this.sendNotificationToTokensBatch(tokenValues, notification, linkPath);
         } catch (error) {
             console.error(`[FCM] sendNotificationToUser 에러 (userId: ${userId}):`, error);
             throw error;
@@ -47,9 +47,9 @@ export class FcmService {
      * 토큰 배열 기반 배치 알림 전송 (최대 500개씩 batch 전송)
      * @param {string[]} tokens - FCM 토큰 배열
      * @param {object} notification - 알림 객체 { title, body }
-     * @param {string} originalDate - 원본 날짜 (YYYY-MM-DD 형식, 선택)
+     * @param {string} linkPath - 알림 클릭 시 이동할 경로 (선택, 기본값: "/my")
      */
-    async sendNotificationToTokensBatch(tokens, notification, originalDate = null) {
+    async sendNotificationToTokensBatch(tokens, notification, linkPath = '/my') {
         if (!tokens || tokens.length === 0) {
             console.log('[FCM] 전송할 토큰이 없습니다.');
             return;
@@ -68,9 +68,7 @@ export class FcmService {
                         icon: 'https://haru-film-bucket.s3.ap-northeast-2.amazonaws.com/icons/logo_icon.png',
                     },
                     fcmOptions: {
-                        link: originalDate
-                            ? `${process.env.FRONTEND_URL}/videos/${originalDate}`
-                            : process.env.FRONTEND_URL
+                        link: `${process.env.FRONTEND_URL}${linkPath}`
                     }
                 }
             };
@@ -141,7 +139,7 @@ export class FcmService {
                 body: `✅ ${formattedDate} 영상 업로드에 성공했습니다.`
             };
 
-            await this.sendNotificationToUser(userId, notification, uploadDate);
+            await this.sendNotificationToUser(userId, notification, `/videos/${uploadDate}`);
         } catch (error) {
             console.error(`[FCM] notifyUploadSuccess 에러 (userId: ${userId}):`, error);
             throw error;
@@ -157,7 +155,7 @@ export class FcmService {
                 body: `❌ ${formattedDate} 영상 업로드에 실패했습니다.`
             };
 
-            await this.sendNotificationToUser(userId, notification, uploadDate);
+            await this.sendNotificationToUser(userId, notification, `/videos/${uploadDate}`);
         } catch (error) {
             console.error(`[FCM] notifyUploadFailure 에러 (userId: ${userId}):`, error);
             throw error;
@@ -173,7 +171,7 @@ export class FcmService {
                 body: `✅ ${formattedDate} 영상 인코딩에 성공했습니다.`
             };
 
-            await this.sendNotificationToUser(userId, notification, uploadDate);
+            await this.sendNotificationToUser(userId, notification, `/videos/${uploadDate}`);
         } catch (error) {
             console.error(`[FCM] notifyEncodingSuccess 에러 (userId: ${userId}):`, error);
             throw error;
@@ -189,7 +187,7 @@ export class FcmService {
                 body: `❌ ${formattedDate} 영상 인코딩에 실패했습니다.`
             };
 
-            await this.sendNotificationToUser(userId, notification, uploadDate);
+            await this.sendNotificationToUser(userId, notification, `/videos/${uploadDate}`);
         } catch (error) {
             console.error(`[FCM] notifyEncodingFailure 에러 (userId: ${userId}):`, error);
             throw error;

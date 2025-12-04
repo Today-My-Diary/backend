@@ -113,62 +113,46 @@ export class VideoRepository {
         }
     }
 
-    // 과거의 비디오 중 랜덤 3개 조회 (Raw SQL 사용)
+    // 과거의 비디오 중 랜덤 3개 조회 (1개 쿼리 + SQL RAND)
     async findRandomPastVideos(userId, todayDate, limit = 3) {
         const userIdBigInt = BigInt(userId);
 
         try {
-            // 과거 비디오의 ID 수집
-            const allPastVideos = await this.prisma.video.findMany({
-                where: {
-                    userId: userIdBigInt,
-                    uploadDate: {
-                        lt: todayDate
-                    },
-                    status: 'COMPLETE',
-                    s3Url: {
-                        not: null
-                    }
-                },
-                select: {
-                    videoId: true
-                }
-            });
+            // ORDER BY RAND()로 DB에서 직접 랜덤 정렬
+            const rows = await this.prisma.$queryRaw`
+                SELECT videoId, uploadDate, thumbnailS3Url
+                FROM Video
+                WHERE userId = ${userIdBigInt}
+                AND uploadDate < ${todayDate}
+                AND status = 'COMPLETE'
+                AND s3Url IS NOT NULL
+                ORDER BY RAND()
+                LIMIT ${limit}
+            `;
 
-            if (allPastVideos.length === 0) {
+            if (rows.length === 0) {
                 return [];
             }
 
-            // ID 목록을 섞고 데이터 조회
-            const shuffledIds = allPastVideos.map(v => v.videoId);
-            for (let i = shuffledIds.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffledIds[i], shuffledIds[j]] = [shuffledIds[j], shuffledIds[i]];
-            }
-
-            const randomIds = shuffledIds.slice(0, limit);
-
-            // 뽑힌 ID 3개에 대해 비디오 정보와 timestamps 조회
-            const rows = await this.prisma.video.findMany({
-                where: {
-                    videoId: {
-                        in: randomIds
-                    }
-                },
-                include: {
-                    timestamps: {
+            // Timestamps 병렬 조회 (Promise.all)
+            const videosWithTimestamps = await Promise.all(
+                rows.map(async (video) => {
+                    const timestamps = await this.prisma.timestamp.findMany({
+                        where: { videoId: video.videoId },
                         orderBy: { time: 'asc' },
                         select: { time: true, label: true }
-                    }
-                }
-            });
+                    });
 
-            return rows.map(r => ({
-                videoId: r.videoId,
-                uploadDate: r.uploadDate,
-                thumbnailS3Url: r.thumbnailS3Url,
-                timestamps: r.timestamps
-            }));
+                    return {
+                        videoId: video.videoId,
+                        uploadDate: video.uploadDate,
+                        thumbnailS3Url: video.thumbnailS3Url,
+                        timestamps: timestamps
+                    };
+                })
+            );
+
+            return videosWithTimestamps;
         } catch (error) {
             console.error("VideoRepository findRandomPastVideos 에러:", error);
             throw new Error("랜덤 비디오 조회에 실패했습니다.");
@@ -183,7 +167,7 @@ export class VideoRepository {
                     s3Key: s3Key,
                 },
                 data: {
-                    s3Url: resultData.encodedUrl,
+                    s3Url: resultData.encodedS3Url,
                     status: resultData.status,
                 }
             });

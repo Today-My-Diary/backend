@@ -59,7 +59,7 @@ const videoService = new VideoService(videoRepository);
 const fcmService = new FcmService(tokenRepository);
 
 // Scheduler
-export const notificationScheduler = new NotificationScheduler(videoRepository, tokenRepository, fcmService, s3Service);
+export const notificationScheduler = new NotificationScheduler(videoRepository, fcmService, s3Service);
 
 // Business
 const authBusiness = new AuthBusiness(authService, userService, tokenService, fcmService);
