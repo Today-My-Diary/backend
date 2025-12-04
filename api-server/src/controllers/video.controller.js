@@ -1,36 +1,26 @@
+import { throwError } from "../errors/throwError.js";
+
 export class VideoController {
     constructor(videoBusiness) {
         this.videoBusiness = videoBusiness;
     }
 
-    // GET /api/videos?year={year}&month={month}
     getMonthlyVideos = async (req, res) => {
-        try {
-            const { year, month } = req.query;
-            const videos = await this.videoBusiness.getMonthlyVideos(req.user.userId, year, month);
-            res.status(200).json(videos);
-        } catch (error) {
-            res.status(400).json({ error: error.message });
+        const { year, month } = req.query;
+        if (!year || !month) {
+            throwError("year와 month는 필수입니다.", 400, "INVALID_QUERY");
         }
+        const videos = await this.videoBusiness.getMonthlyVideos(req.user.userId, year, month);
+        res.status(200).json(videos);
     };
 
-    // GET /api/videos/today
     getTodayFeed = async (req, res) => {
-        try {
-            const feedData = await this.videoBusiness.getTodayFeed(req.user.userId);
-            res.status(200).json(feedData);
-        } catch (error) {
-            res.status(400).json({ error: error.message });
-        }
+        const feedData = await this.videoBusiness.getTodayFeed(req.user.userId);
+        res.status(200).json(feedData);
     };
 
-    // GET /api/videos/:date
     getVideoByDate = async (req, res) => {
-        try {
-            const video = await this.videoBusiness.getVideoByDate(req.user.userId, req.params.date);
-            res.status(200).json(video);
-        } catch (error) {
-            res.status(400).json({ error: error.message });
-        }
-    }
+        const video = await this.videoBusiness.getVideoByDate(req.user.userId, req.params.date);
+        res.status(200).json(video);
+    };
 }
