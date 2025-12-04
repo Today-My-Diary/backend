@@ -10,7 +10,7 @@
 
 <details>
 
-<summary><b>1. 비디오 업로드</b></summary>
+<summary><h3>1. 비디오 업로드</h3></summary>
 
 - **멀티파트 업로드**: 대용량 파일도 안정적으로 업로드
 - **Presigned URL 사용**: 클라이언트가 S3에 직접 업로드 (서버 부하 감소)
@@ -21,7 +21,7 @@
 
 <details>
 
-<summary><b>2. 비디오 인코딩 (백그라운드)</b></summary>
+<summary><h3>2. 비디오 인코딩 (백그라운드)</h3></summary>
 
 - **FFmpeg 기반 자동 변환**: H.264 코덱으로 최적화
 - **HLS 스트리밍 포맷**: 다양한 해상도 자동 생성
@@ -35,7 +35,7 @@
 
 <details>
 
-<summary><b>3. 비디오 조회</b></summary>
+<summary><h3>3. 비디오 조회</h3></summary>
 
 - **월별 조회**: 특정 월의 모든 비디오 조회
 - **오늘의 피드**: 오늘 업로드된 비디오 조회
@@ -46,7 +46,7 @@
 
 <details>
 
-<summary><b>4. 푸시 알림 (FCM)</b></summary>
+<summary><h3>4. 푸시 알림 (FCM)</h3></summary>
 
 - **업로드 알림**: "업로드가 완료되었습니다!"
 - **인코딩 완료 알림**: "비디오 인코딩이 완료되었습니다!"
@@ -63,7 +63,7 @@
 - Router → Controller → Business(비지니스 로직) → Service(상세 구현) → Repository 계층 분리
 
 <details>
-<summary><b>디렉토리 구조</b></summary>
+<summary><h3>디렉토리 구조</h3></summary>
 
 ```
 harufilm-backend/
@@ -118,7 +118,7 @@ harufilm-backend/
 </details>
 
 <details>
-<summary><b>의존성 주입 (DI Container)</b></summary>
+<summary><h3>의존성 주입 (DI Container)</h3></summary>
 
 ```javascript
 // 1. DB 및 외부 클라이언트
@@ -256,7 +256,7 @@ sequenceDiagram
 | **컨테이너화** | Docker, Docker Compose |
 
 <details>
-<summary><b>API Server (`api-server/`) 주요 라이브러리 및 버전</b></summary>
+<summary><h3>API Server (`api-server/`) 주요 라이브러리 및 버전</h3></summary>
 
 | **라이브러리** | **버전** | **용도** |
 | --- | --- | --- |
@@ -275,7 +275,7 @@ sequenceDiagram
 </details>
 
 <details>
-<summary><b>Encoding Server (`encoding-server/`) 주요 라이브러리 및 버전</b></summary>
+<summary><h3>Encoding Server (`encoding-server/`) 주요 라이브러리 및 버전</h3></summary>
 
 | **라이브러리** | **버전** | **용도** |
 | --- | --- | --- |
