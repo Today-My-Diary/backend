@@ -5,14 +5,10 @@ stages:
 variables:
   DOCKER_IMAGE: $CI_REGISTRY_IMAGE/api-server:latest
   DEPLOY_DIR: "/home/ubuntu/harufilm-be"
-  DOCKER_TLS_CERTDIR: ""
-  DOCKER_HOST: tcp://docker:2375
 
 build-api:
   stage: build
   image: docker:stable
-  services:
-    - docker:dind
   script:
     - echo "Logging into GitLab Registry..."
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
