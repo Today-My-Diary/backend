@@ -1,0 +1,13 @@
+services:
+  harufilm-rabbitmq:
+    restart: always
+    environment:
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: '-rabbitmq_management path_prefix "/mq"'
+
+  harufilm-api-server:
+    image: git.ajou.ac.kr:5050/today-my-diary/backend/api-server:latest
+    restart: always
+
+  harufilm-encoding-server:
+    image: git.ajou.ac.kr:5050/today-my-diary/backend/encoding-server:latest
+    restart: always

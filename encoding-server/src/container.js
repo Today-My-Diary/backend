@@ -19,10 +19,10 @@ const s3Client = new S3Client({
 
 // 의존성 조립 (Bottom-Up)
 const s3Bucket = process.env.S3_BUCKET_NAME;
-const awsRegion = process.env.AWS_REGION;
+const cloudFrontUrl = process.env.AWS_CLOUD_FRONT_URL;
 
 // Services
-export const s3Service = new S3Service(s3Client, s3Bucket, awsRegion);
+export const s3Service = new S3Service(s3Client, s3Bucket, cloudFrontUrl);
 export const encodingService = new EncodingService(ffmpegConfig);
 export const rabbitMQProducerService = new RabbitMQProducerService();
 export const rabbitMQConsumerService = new RabbitMQConsumerService();

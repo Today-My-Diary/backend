@@ -38,6 +38,7 @@ import { FcmController } from "./controllers/fcm.controller.js";
 // 환경변수 설정
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
 const s3BucketName = process.env.S3_BUCKET_NAME;
+const cloudFrontUrl = process.env.AWS_CLOUD_FRONT_URL;
 
 // 의존성 조립 (Bottom-Up)
 
@@ -48,7 +49,7 @@ const tokenRepository = new TokenRepository(prisma);
 
 // Services
 const authService = new AuthService();
-export const s3Service = new S3Service(s3Client, s3BucketName);
+export const s3Service = new S3Service(s3Client, s3BucketName, cloudFrontUrl);
 export const tokenService = new TokenService();
 export const userService = new UserService(userRepository);
 export const rabbitMQProducerService = new RabbitMQProducerService();

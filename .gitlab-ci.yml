@@ -1,0 +1,108 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  API_IMAGE: $CI_REGISTRY_IMAGE/api-server:latest
+  ENCODING_IMAGE: $CI_REGISTRY_IMAGE/encoding-server:latest
+  DEPLOY_DIR: "/home/ubuntu/harufilm-be"
+
+# ==========================================
+# Build
+# ==========================================
+build-api:
+  stage: build
+  image: docker:latest
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - cp $FIREBASE_JSON_FILE ./api-server/haru-film-firebase.json
+    - docker pull $API_IMAGE || true
+    - docker build --cache-from $API_IMAGE -t $API_IMAGE -f ./api-server/Dockerfile ./api-server
+    - docker push $API_IMAGE
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - api-server/**/*
+        - docker-compose.yml
+        - docker-compose.prod.yml
+
+build-encoding:
+  stage: build
+  image: docker:latest
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $ENCODING_IMAGE || true
+    - docker build --cache-from $ENCODING_IMAGE -t $ENCODING_IMAGE -f ./encoding-server/Dockerfile ./encoding-server
+    - docker push $ENCODING_IMAGE
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - encoding-server/**/*
+        - docker-compose.yml
+        - docker-compose.prod.yml
+
+# ==========================================
+# Deploy
+# ==========================================
+.deploy_template: &deploy_template
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+
+deploy-api-to-ec2:
+  <<: *deploy_template
+  script:
+    - ssh $SSH_USER@$API_SERVER_IP "mkdir -p $DEPLOY_DIR/api-server $DEPLOY_DIR/encoding-server"
+
+    - scp docker-compose.yml $SSH_USER@$API_SERVER_IP:$DEPLOY_DIR/
+    - scp docker-compose.prod.yml $SSH_USER@$API_SERVER_IP:$DEPLOY_DIR/
+
+    - scp $DOTENV_API $SSH_USER@$API_SERVER_IP:$DEPLOY_DIR/api-server/.env
+    - ssh $SSH_USER@$API_SERVER_IP "touch $DEPLOY_DIR/encoding-server/.env"
+
+    - ssh $SSH_USER@$API_SERVER_IP "
+      cd $DEPLOY_DIR &&
+      docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+
+      docker compose -f docker-compose.yml -f docker-compose.prod.yml pull &&
+      docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d harufilm-api-server harufilm-rabbitmq &&
+
+      docker image prune -af"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - api-server/**/*
+        - docker-compose.yml
+        - docker-compose.prod.yml
+
+deploy-encoding-to-ec2:
+  <<: *deploy_template
+  script:
+    - ssh $SSH_USER@$ENCODING_SERVER_IP "mkdir -p $DEPLOY_DIR/api-server $DEPLOY_DIR/encoding-server"
+
+    - scp docker-compose.yml $SSH_USER@$ENCODING_SERVER_IP:$DEPLOY_DIR/
+    - scp docker-compose.prod.yml $SSH_USER@$ENCODING_SERVER_IP:$DEPLOY_DIR/
+
+    - scp $DOTENV_ENCODING $SSH_USER@$ENCODING_SERVER_IP:$DEPLOY_DIR/encoding-server/.env
+    - ssh $SSH_USER@$ENCODING_SERVER_IP "touch $DEPLOY_DIR/api-server/.env"
+
+    - ssh $SSH_USER@$ENCODING_SERVER_IP "
+      cd $DEPLOY_DIR &&
+      docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+
+      docker compose -f docker-compose.yml -f docker-compose.prod.yml pull &&
+      docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --no-deps harufilm-encoding-server &&
+
+      docker image prune -af"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - encoding-server/**/*
+        - docker-compose.yml
+        - docker-compose.prod.yml
