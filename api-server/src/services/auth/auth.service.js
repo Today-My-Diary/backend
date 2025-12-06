@@ -1,3 +1,5 @@
+import { GoogleAuthError } from '../../errors/CustomError.js';
+
 export class AuthService {
 
     getGoogleLoginUrl() {
@@ -33,7 +35,7 @@ export class AuthService {
         if (!response.ok) {
             const errorData = await response.json();
             console.error('Error fetching Google tokens:', errorData);
-            throw new Error('Failed to get Google tokens');
+            throw new GoogleAuthError('구글 토큰을 가져오는데 실패했습니다.');
         }
         return await response.json();
     }
@@ -49,7 +51,7 @@ export class AuthService {
         if (!response.ok) {
             const errorData = await response.json();
             console.error('Error fetching Google profile:', errorData);
-            throw new Error('Failed to get Google profile');
+            throw new GoogleAuthError('구글 프로필을 가져오는데 실패했습니다.');
         }
         return await response.json();
     }
