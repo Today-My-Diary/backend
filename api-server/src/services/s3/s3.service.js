@@ -10,9 +10,10 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export class S3Service {
 
-    constructor(s3Client, s3BucketName) {
+    constructor(s3Client, s3BucketName, cloudFrontUrl) {
         this.s3Client = s3Client;
         this.s3BucketName = s3BucketName;
+        this.cloudFrontUrl = cloudFrontUrl;
     }
 
     callInitiateMultiPartsUpload = async (userId, uploadDate) => {
@@ -44,8 +45,9 @@ export class S3Service {
         const command = this._createMultiPartsCompleteCommand(userId, uploadId, parts, uploadDate);
 
         try {
-            const response = await this.s3Client.send(command);
-            return response.Location;
+            await this.s3Client.send(command);
+            const key = this.generateVideoS3Key(userId, uploadDate);
+            return `${this.cloudFrontUrl}/${key}`;
         } catch (error) {
             console.error("S3 CompleteUpload 에러:", error);
             throw new Error("S3 업로드를 완료할 수 없습니다.");
@@ -85,15 +87,7 @@ export class S3Service {
         return `thumbnails/${userId}/${uploadDate}.jpg`;
     }
 
-    getS3Url = async (s3Key) => {
-        try {
-            const region = await this.s3Client.config.region();
-            return `https://${this.s3BucketName}.s3.${region}.amazonaws.com/${s3Key}`;
-        } catch (error) {
-            console.error("S3 리전 정보를 가져오거나 URL을 생성하는 데 실패했습니다.", error);
-            throw new Error("S3 URL을 생성할 수 없습니다.");
-        }
-    }
+    getS3Url = async (s3Key) => `${this.cloudFrontUrl}/${s3Key}`;
 
     _createMultiPartsInitiateCommand = (userId, uploadDate) => {
         const key = this.generateVideoS3Key(userId, uploadDate);

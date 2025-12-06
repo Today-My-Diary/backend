@@ -4,11 +4,10 @@ import https from "https";
 import path from "path";
 
 export class S3Service {
-    constructor(s3Client, bucket, region) {
+    constructor(s3Client, bucket, cloudFrontUrl) {
         this.s3Client = s3Client;
         this.bucket = bucket;
-        this.region = region;
-
+        this.cloudFrontUrl = cloudFrontUrl;
     }
 
     async downloadFromUrl(inputUrl, tempPath) {
@@ -41,7 +40,7 @@ export class S3Service {
         });
 
        await this.s3Client.send(command);
-       return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
+       return `${this.cloudFrontUrl}/${key}`;
     }
 
     getContentType(filePath){
@@ -68,11 +67,11 @@ export class S3Service {
             const s3Key = `${s3Prefix}/${relativePath}`;
 
             console.log(`[S3 Upload] ${filePath} → s3://${this.bucket}/${s3Key}`);
-
+            
             await this.uploadVideo(filePath, s3Key);
         }
 
-        return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${s3Prefix}/master.m3u8`;
+        return `${this.cloudFrontUrl}/${s3Prefix}/master.m3u8`;
     }
 
     async _readRecursive(dir){
