@@ -3,33 +3,48 @@ stages:
   - deploy
 
 variables:
-  DOCKER_IMAGE: $CI_REGISTRY_IMAGE/api-server:latest
+  API_IMAGE: $CI_REGISTRY_IMAGE/api-server:latest
+  ENCODING_IMAGE: $CI_REGISTRY_IMAGE/encoding-server:latest
   DEPLOY_DIR: "/home/ubuntu/harufilm-be"
 
+# ==========================================
+# Build
+# ==========================================
 build-api:
   stage: build
   image: docker:latest
-  services:
-    - docker:dind
-  variables:
-    DOCKER_TLS_CERTDIR: ""
   script:
-    - echo "Logging into GitLab Registry..."
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - cp $FIREBASE_JSON_FILE ./api-server/haru-film-firebase.json
-
-    - echo "Pulling previous image for cache..."
-    - docker pull $DOCKER_IMAGE || true
-
-    - echo "Building Docker Image..."
-    - docker build --cache-from $DOCKER_IMAGE -t $DOCKER_IMAGE -f ./api-server/Dockerfile ./api-server
-
-    - echo "Pushing Image..."
-    - docker push $DOCKER_IMAGE
+    - docker pull $API_IMAGE || true
+    - docker build --cache-from $API_IMAGE -t $API_IMAGE -f ./api-server/Dockerfile ./api-server
+    - docker push $API_IMAGE
   rules:
     - if: $CI_COMMIT_BRANCH == "chore/#28/deploy"
+      changes:
+        - api-server/**/*
+        - docker-compose.yml
+        - docker-compose.prod.yml
 
-deploy-to-ec2:
+build-encoding:
+  stage: build
+  image: docker:latest
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $ENCODING_IMAGE || true
+    - docker build --cache-from $ENCODING_IMAGE -t $ENCODING_IMAGE -f ./encoding-server/Dockerfile ./encoding-server
+    - docker push $ENCODING_IMAGE
+  rules:
+    - if: $CI_COMMIT_BRANCH == "chore/#28/deploy"
+      changes:
+        - encoding-server/**/*
+        - docker-compose.yml
+        - docker-compose.prod.yml
+
+# ==========================================
+# Deploy
+# ==========================================
+.deploy_template: &deploy_template
   stage: deploy
   image: alpine:latest
   before_script:
@@ -40,36 +55,54 @@ deploy-to-ec2:
     - chmod 700 ~/.ssh
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
 
+deploy-api-to-ec2:
+  <<: *deploy_template
   script:
-    - echo "Deploying to API Server..."
+    - ssh $SSH_USER@$API_SERVER_IP "mkdir -p $DEPLOY_DIR/api-server $DEPLOY_DIR/encoding-server"
 
-    # 1. 배포 폴더 생성
-    - ssh $SSH_USER@$API_SERVER_IP "mkdir -p $DEPLOY_DIR"
+    - scp docker-compose.yml $SSH_USER@$API_SERVER_IP:$DEPLOY_DIR/
+    - scp docker-compose.prod.yml $SSH_USER@$API_SERVER_IP:$DEPLOY_DIR/
 
-    # 2. 파일 전송
-    - scp docker-compose.yml $SSH_USER@$API_SERVER_IP:$DEPLOY_DIR/docker-compose.yml
-    - scp docker-compose.prod.yml $SSH_USER@$API_SERVER_IP:$DEPLOY_DIR/docker-compose.prod.yml
+    - scp $DOTENV_API $SSH_USER@$API_SERVER_IP:$DEPLOY_DIR/api-server/.env
+    - ssh $SSH_USER@$API_SERVER_IP "touch $DEPLOY_DIR/encoding-server/.env"
 
-    # 3. 환경변수 파일 생성
-    - scp $DOTENV_API $SSH_USER@$API_SERVER_IP:$DEPLOY_DIR/.env
-
-    # 4. 원격 명령 실행
     - ssh $SSH_USER@$API_SERVER_IP "
       cd $DEPLOY_DIR &&
-
-      echo 'Login to Registry...' &&
       docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
 
-      echo 'Pulling new images...' &&
       docker compose -f docker-compose.yml -f docker-compose.prod.yml pull &&
+      docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d harufilm-api-server harufilm-rabbitmq &&
 
-      echo 'Restarting containers...' &&
-      docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d &&
-
-      echo 'Cleaning up unused images...' &&
       docker image prune -af"
-
-    - echo "Deployment Complete!"
-
   rules:
     - if: $CI_COMMIT_BRANCH == "chore/#28/deploy"
+      changes:
+        - api-server/**/*
+        - docker-compose.yml
+        - docker-compose.prod.yml
+
+deploy-encoding-to-ec2:
+  <<: *deploy_template
+  script:
+    - ssh $SSH_USER@$ENCODING_SERVER_IP "mkdir -p $DEPLOY_DIR/api-server $DEPLOY_DIR/encoding-server"
+
+    - scp docker-compose.yml $SSH_USER@$ENCODING_SERVER_IP:$DEPLOY_DIR/
+    - scp docker-compose.prod.yml $SSH_USER@$ENCODING_SERVER_IP:$DEPLOY_DIR/
+
+    - scp $DOTENV_ENCODING $SSH_USER@$ENCODING_SERVER_IP:$DEPLOY_DIR/encoding-server/.env
+    - ssh $SSH_USER@$ENCODING_SERVER_IP "touch $DEPLOY_DIR/api-server/.env"
+
+    - ssh $SSH_USER@$ENCODING_SERVER_IP "
+      cd $DEPLOY_DIR &&
+      docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+
+      docker compose -f docker-compose.yml -f docker-compose.prod.yml pull &&
+      docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d harufilm-encoding-server &&
+
+      docker image prune -af"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "chore/#28/deploy"
+      changes:
+        - encoding-server/**/*
+        - docker-compose.yml
+        - docker-compose.prod.yml
