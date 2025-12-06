@@ -136,7 +136,7 @@ const authController = new AuthController(authBusiness);
 <details>
 <summary><h3>1. OAuth Google 소셜 로그인</h3></summary>
 
-> 라이브러리 의존 없이 직접 OAuth Google 소셜 로그인을 진행했습니다.
+> 라이브러리 의존 없이 직접 OAuth Google 소셜 로그인을 구현했습니다.
 
 ```mermaid
 sequenceDiagram
@@ -284,7 +284,7 @@ sequenceDiagram
 
 > `VideoRepository.findRandomPastVideos()` 에서 과거 영상 3개를 조회시의 문제를 개선했습니다.
 
-##### ❌ 기존의 문제 상황
+### ❌ 기존의 문제 상황
 - **2개 쿼리**: 모든 과거 영상 조회 → 다시 3개 조회
 - **메모리 낭비**: 모든 과거 영상을 배열로 로드 후 메모리에서 셔플
 - **불필요한 연산**: Fisher-Yates 셔플 알고리즘 (O(n))
@@ -306,7 +306,7 @@ const rows = await this.prisma.video.findMany({
 });
 ```
 
-#####  ✅ 개선 내용
+###  ✅ 개선 내용
 
 이러한 문제를 **1개 SQL 쿼리 + 병렬 timestamps 조회**로 개선했습니다.
 - [x] SQL의 ORDER BY RAND() 활용
@@ -404,7 +404,7 @@ sequenceDiagram
 > 알림 전송 로직을 토큰 기반 배치 처리로 최적화를 진행했습니다.
 
 
-#### ❌ 기존의 성능 병목
+### ❌ 기존의 성능 병목
 - **사용자 루프**: 오늘 영상 없는 사용자마다 개별 처리
 - **반복되는 토큰 조회**: 각 사용자의 토큰을 매번 별도로 조회 (findByUserId)
 - **결과**: 500명 사용자 = 500번 반복 + 500번 토큰 조회
@@ -417,7 +417,7 @@ for (const user of usersWithoutTodayVideo) {
 }
 ```
 
-#### ✅ 개선 내용
+### ✅ 개선 내용
 
 - [x] VideoRepository.findUsersWithoutTodayVideo() 개선
     - 쿼리 2번 + 메모리 필터링 -> 한번의 쿼리 : 토큰 정보를 함께 조회하는 LEFT JOIN 쿼리로 개선 (메모리 필터링 X)
@@ -440,7 +440,7 @@ for (const user of usersWithoutTodayVideo) {
 3. **Controller에서 모든 에러를 next()로 전달**
 4. **Error Handler Middleware에서 일괄 처리**
 
-#### 에러 처리 컨벤션
+### 에러 처리 컨벤션
 
 1. **모든 에러는 CustomError 사용**
    ```javascript
@@ -464,10 +464,10 @@ for (const user of usersWithoutTodayVideo) {
     - ❌ `'파라미터 누락'`
 
 
-#### 에러 응답 예시
+### 에러 응답 예시
 
 <details>
-<summary>✅ 성공 응답 예시</summary>
+<summary><h4>✅ 성공 응답 예시</h4></summary>
 
 ```json
 {
@@ -480,7 +480,7 @@ for (const user of usersWithoutTodayVideo) {
 </details>
 
 <details>
-<summary>❌ 에러 응답 예시</summary>
+<summary><h4>❌ 에러 응답 예시</h4></summary>
 
 ```json
 {
@@ -491,13 +491,7 @@ for (const user of usersWithoutTodayVideo) {
 ```
 </details>
 
-**HTTP 상태 코드**는 에러 클래스에 따라 자동 설정됩니다:
-- 400: BadRequest 계열
-- 401: Unauthorized 계열
-- 404: NotFound 계열
-- 500: InternalServerError 계열
-
-#### 코드 적용 예시
+### 코드 적용 예시
 
 <details>
 <summary>Controller 예시</summary>
@@ -565,7 +559,7 @@ async findById(videoId) {
 - **Scheduler** : 스케줄러 에러 로깅
 
 <details>
-<summary>전체 에러 코드 목록</summary>
+<summary><h3>전체 에러 코드 목록</h3></summary>
 
 | 에러 코드 | HTTP | 도메인 | 설명 |
 |----------|------|--------|------|
