@@ -1,3 +1,5 @@
+import { DatabaseError, VideoNotFoundError } from '../../errors/CustomError.js';
+
 export class VideoRepository {
 
     constructor(prismaClient) {
@@ -9,7 +11,7 @@ export class VideoRepository {
             return await this.prisma.video.create(options);
         } catch (error) {
             console.error("VideoRepository create 에러:", error);
-            throw new Error("데이터베이스에 비디오 정보를 저장할 수 없습니다.");
+            throw new DatabaseError("데이터베이스에 비디오 정보를 저장할 수 없습니다.");
         }
     }
 
@@ -37,7 +39,7 @@ export class VideoRepository {
             });
         } catch (error) {
             console.error("VideoRepository upsertByDate 에러:", error);
-            throw new Error("데이터베이스에 비디오 정보를 저장/업데이트할 수 없습니다.");
+            throw new DatabaseError("데이터베이스에 비디오 정보를 저장/업데이트할 수 없습니다.");
         }
     }
 
@@ -58,7 +60,7 @@ export class VideoRepository {
             });
         } catch (error) {
             console.error("VideoRepository findByDate 에러:", error);
-            throw new Error("데이터베이스에서 비디오 정보를 조회할 수 없습니다.");
+            throw new DatabaseError("데이터베이스에서 비디오 정보를 조회할 수 없습니다.");
         }
     }
 
@@ -83,8 +85,8 @@ export class VideoRepository {
                 }
             });
         } catch (error) {
-            console.error("VideoRepository findByDate 에러:", error);
-            throw new Error("데이터베이스에서 비디오 정보를 조회할 수 없습니다.");
+            console.error("VideoRepository findByDateWithTimestamps 에러:", error);
+            throw new DatabaseError("데이터베이스에서 비디오 정보를 조회할 수 없습니다.");
         }
     }
 
@@ -109,7 +111,7 @@ export class VideoRepository {
             });
         } catch (error) {
             console.error("VideoRepository findByMonth 에러:", error);
-            throw new Error("월별 비디오 정보를 조회할 수 없습니다.");
+            throw new DatabaseError("월별 비디오 정보를 조회할 수 없습니다.");
         }
     }
 
@@ -155,7 +157,7 @@ export class VideoRepository {
             return videosWithTimestamps;
         } catch (error) {
             console.error("VideoRepository findRandomPastVideos 에러:", error);
-            throw new Error("랜덤 비디오 조회에 실패했습니다.");
+            throw new DatabaseError("랜덤 비디오 조회에 실패했습니다.");
         }
     }
 
@@ -174,9 +176,9 @@ export class VideoRepository {
         } catch (error) {
             console.error("VideoRepository updateEncodingResult 에러:", error);
             if (error.code === 'P2025') {
-                throw new Error("업데이트할 비디오를 찾을 수 없습니다.");
+                throw new VideoNotFoundError("업데이트할 비디오를 찾을 수 없습니다.");
             }
-            throw new Error("비디오 인코딩 결과를 업데이트할 수 없습니다.");
+            throw new DatabaseError("비디오 인코딩 결과를 업데이트할 수 없습니다.");
         }
     }
 
@@ -211,7 +213,7 @@ export class VideoRepository {
             return usersWithoutVideo;
         } catch (error) {
             console.error("VideoRepository findUsersWithoutTodayVideo 에러:", error);
-            throw new Error("사용자 정보를 조회할 수 없습니다.");
+            throw new DatabaseError("사용자 정보를 조회할 수 없습니다.");
         }
     }
 }
