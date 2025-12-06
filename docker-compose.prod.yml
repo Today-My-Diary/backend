@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  harufilm-rabbitmq:
+    restart: always
+    environment:
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: '-rabbitmq_management path_prefix "/mq"'
+
+  harufilm-api-server:
+    image: ${CI_REGISTRY_IMAGE}/api-server:latest
+    restart: always

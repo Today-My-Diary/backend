@@ -1,0 +1,69 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  DOCKER_IMAGE: $CI_REGISTRY_IMAGE/api-server:latest
+  DEPLOY_DIR: "/home/ubuntu/harufilm-be"
+
+build-api:
+  stage: build
+  image: docker:stable
+  services:
+    - docker:dind
+  script:
+    - echo "Logging into GitLab Registry..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+    - echo "Building Docker Image..."
+    - docker build -t $DOCKER_IMAGE -f ./api-server/Dockerfile ./api-server
+
+    - echo "Pushing Image..."
+    - docker push $DOCKER_IMAGE
+  rules:
+    - if: $CI_COMMIT_BRANCH == "chore/#28/deploy"
+
+deploy-to-ec2:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+
+  script:
+    - echo "Deploying to API Server..."
+
+    # 1. 배포 폴더 생성
+    - ssh $SSH_USER@$API_SERVER_IP "mkdir -p $DEPLOY_DIR"
+
+    # 2. 파일 전송
+    - scp docker-compose.yml $SSH_USER@$API_SERVER_IP:$DEPLOY_DIR/docker-compose.yml
+    - scp docker-compose.prod.yml $SSH_USER@$API_SERVER_IP:$DEPLOY_DIR/docker-compose.prod.yml
+
+    # 3. 환경변수 파일 생성
+    - scp $DOTENV_API $SSH_USER@$API_SERVER_IP:$DEPLOY_DIR/.env
+
+    # 4. 원격 명령 실행
+    - ssh $SSH_USER@$API_SERVER_IP "
+      cd $DEPLOY_DIR &&
+
+      echo 'Login to Registry...' &&
+      docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+
+      echo 'Pulling new images...' &&
+      docker compose -f docker-compose.yml -f docker-compose.prod.yml pull &&
+
+      echo 'Restarting containers...' &&
+      docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d &&
+
+      echo 'Cleaning up unused images...' &&
+      docker image prune -f"
+
+    - echo "Deployment Complete!"
+
+  rules:
+    - if: $CI_COMMIT_BRANCH == "chore/#28/deploy"
