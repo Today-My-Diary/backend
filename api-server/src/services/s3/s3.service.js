@@ -7,6 +7,11 @@ import {
     GetObjectCommand
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import {
+    S3UploadError,
+    S3DeleteError,
+    S3UrlGenerationError
+} from '../../errors/CustomError.js';
 
 export class S3Service {
 
@@ -25,7 +30,7 @@ export class S3Service {
             };
         } catch (error) {
             console.error("S3 InitiateUpload 에러:", error);
-            throw new Error("S3 업로드를 시작할 수 없습니다.");
+            throw new S3UploadError("S3 업로드를 시작할 수 없습니다.");
         }
     };
 
@@ -36,7 +41,7 @@ export class S3Service {
             return await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
         } catch (error) {
             console.error("S3 GetUploadPartUrl 에러:", error);
-            throw new Error("S3 업로드 URL을 가져올 수 없습니다.");
+            throw new S3UrlGenerationError("S3 업로드 URL을 가져올 수 없습니다.");
         }
     }
 
@@ -48,7 +53,7 @@ export class S3Service {
             return response.Location;
         } catch (error) {
             console.error("S3 CompleteUpload 에러:", error);
-            throw new Error("S3 업로드를 완료할 수 없습니다.");
+            throw new S3UploadError("S3 업로드를 완료할 수 없습니다.");
         }
     }
 
@@ -60,6 +65,7 @@ export class S3Service {
         } catch (error) {
             // 이미 원본 에러를 처리 중이므로, 여기서는 로깅만 할 수도 있음)
             console.error(`[CRITICAL] S3 롤백 실패: ${s3Key} 파일 삭제에 실패했습니다.`, error);
+            throw new S3DeleteError(`S3 파일 삭제에 실패했습니다: ${s3Key}`);
         }
     }
 
@@ -71,7 +77,7 @@ export class S3Service {
             return await getSignedUrl(this.s3Client, command, { expiresIn: 600 });
         } catch (error) {
             console.error("S3 GetPutObjectUrl 에러:", error);
-            throw new Error("썸네일 업로드 URL을 가져올 수 없습니다.");
+            throw new S3UrlGenerationError("썸네일 업로드 URL을 가져올 수 없습니다.");
         }
     }
 
@@ -91,7 +97,7 @@ export class S3Service {
             return `https://${this.s3BucketName}.s3.${region}.amazonaws.com/${s3Key}`;
         } catch (error) {
             console.error("S3 리전 정보를 가져오거나 URL을 생성하는 데 실패했습니다.", error);
-            throw new Error("S3 URL을 생성할 수 없습니다.");
+            throw new S3UrlGenerationError("S3 URL을 생성할 수 없습니다.");
         }
     }
 
