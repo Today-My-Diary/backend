@@ -20,7 +20,7 @@ build-api:
     - docker build --cache-from $API_IMAGE -t $API_IMAGE -f ./api-server/Dockerfile ./api-server
     - docker push $API_IMAGE
   rules:
-    - if: $CI_COMMIT_BRANCH == "chore/#28/deploy"
+    - if: $CI_COMMIT_BRANCH == "main"
       changes:
         - api-server/**/*
         - docker-compose.yml
@@ -35,7 +35,7 @@ build-encoding:
     - docker build --cache-from $ENCODING_IMAGE -t $ENCODING_IMAGE -f ./encoding-server/Dockerfile ./encoding-server
     - docker push $ENCODING_IMAGE
   rules:
-    - if: $CI_COMMIT_BRANCH == "chore/#28/deploy"
+    - if: $CI_COMMIT_BRANCH == "main"
       changes:
         - encoding-server/**/*
         - docker-compose.yml
@@ -75,7 +75,7 @@ deploy-api-to-ec2:
 
       docker image prune -af"
   rules:
-    - if: $CI_COMMIT_BRANCH == "chore/#28/deploy"
+    - if: $CI_COMMIT_BRANCH == "main"
       changes:
         - api-server/**/*
         - docker-compose.yml
@@ -97,11 +97,11 @@ deploy-encoding-to-ec2:
       docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
 
       docker compose -f docker-compose.yml -f docker-compose.prod.yml pull &&
-      docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d harufilm-encoding-server &&
+      docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --no-deps harufilm-encoding-server &&
 
       docker image prune -af"
   rules:
-    - if: $CI_COMMIT_BRANCH == "chore/#28/deploy"
+    - if: $CI_COMMIT_BRANCH == "main"
       changes:
         - encoding-server/**/*
         - docker-compose.yml
