@@ -1,3 +1,5 @@
+import { UserNotFoundError } from '../../errors/CustomError.js';
+
 export class UserService {
 
     constructor(userRepository) {
@@ -20,7 +22,7 @@ export class UserService {
     async findUserById(userId) {
         const user = await this.userRepository.findById(userId);
         if (!user) {
-            throw new Error('유저를 찾을 수 없습니다.');
+            throw new UserNotFoundError('유저를 찾을 수 없습니다.');
         }
         return user;
     }
