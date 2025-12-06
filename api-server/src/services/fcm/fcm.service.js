@@ -1,4 +1,5 @@
 import admin from '../../config/firebase.js';
+import { FcmSendError } from '../../errors/CustomError.js';
 
 export class FcmService {
     constructor(tokenRepository) {
@@ -39,7 +40,7 @@ export class FcmService {
             await this.sendNotificationToTokensBatch(tokenValues, notification, linkPath);
         } catch (error) {
             console.error(`[FCM] sendNotificationToUser 에러 (userId: ${userId}):`, error);
-            throw error;
+            throw new FcmSendError(`사용자 ${userId}에게 알림을 전송할 수 없습니다.`);
         }
     }
 
@@ -126,7 +127,7 @@ export class FcmService {
             );
         } catch (error) {
             console.error('[FCM] sendNotificationToTokensBatch 에러:', error);
-            throw error;
+            throw new FcmSendError('배치 알림 전송에 실패했습니다.');
         }
     }
 
@@ -142,7 +143,7 @@ export class FcmService {
             await this.sendNotificationToUser(userId, notification, `/videos/${uploadDate}`);
         } catch (error) {
             console.error(`[FCM] notifyUploadSuccess 에러 (userId: ${userId}):`, error);
-            throw error;
+            throw new FcmSendError('업로드 성공 알림 전송에 실패했습니다.');
         }
     }
 
@@ -158,7 +159,7 @@ export class FcmService {
             await this.sendNotificationToUser(userId, notification, `/videos/${uploadDate}`);
         } catch (error) {
             console.error(`[FCM] notifyUploadFailure 에러 (userId: ${userId}):`, error);
-            throw error;
+            throw new FcmSendError('업로드 실패 알림 전송에 실패했습니다.');
         }
     }
 
@@ -174,7 +175,7 @@ export class FcmService {
             await this.sendNotificationToUser(userId, notification, `/videos/${uploadDate}`);
         } catch (error) {
             console.error(`[FCM] notifyEncodingSuccess 에러 (userId: ${userId}):`, error);
-            throw error;
+            throw new FcmSendError('인코딩 성공 알림 전송에 실패했습니다.');
         }
     }
 
@@ -190,7 +191,7 @@ export class FcmService {
             await this.sendNotificationToUser(userId, notification, `/videos/${uploadDate}`);
         } catch (error) {
             console.error(`[FCM] notifyEncodingFailure 에러 (userId: ${userId}):`, error);
-            throw error;
+            throw new FcmSendError('인코딩 실패 알림 전송에 실패했습니다.');
         }
     }
 }

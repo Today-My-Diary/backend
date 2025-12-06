@@ -1,4 +1,5 @@
 import amqp from 'amqplib';
+import { MessagePublishError, MessageQueueError } from '../../errors/CustomError.js';
 
 export class RabbitMQProducerService {
     constructor() {
@@ -33,7 +34,7 @@ export class RabbitMQProducerService {
     async sendMessage(msg) {
         if (!this.channel) {
             console.error('RabbitMQ channel is not available. Message skipped.');
-            return;
+            throw new MessageQueueError('RabbitMQ 채널이 사용 불가능합니다.');
         }
 
         try {
@@ -48,10 +49,12 @@ export class RabbitMQProducerService {
                 console.log(`Sent message to Exchange '${this.exchangeName}' with Key '${this.routingKey}':`, msg);
             } else {
                 console.error('Message buffer full, failed to send immediately.');
+                throw new MessagePublishError('메시지 버퍼가 가득 차서 전송에 실패했습니다.');
             }
 
         } catch (error) {
             console.error('Failed to publish message', error);
+            throw new MessagePublishError('RabbitMQ 메시지 발행에 실패했습니다.');
         }
     }
 }

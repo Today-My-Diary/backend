@@ -1,4 +1,5 @@
 import schedule from 'node-schedule';
+import { DatabaseError, FcmSendError, S3UrlGenerationError } from '../errors/CustomError.js';
 
 export class NotificationScheduler {
     constructor(videoRepository, fcmService, s3Service) {
@@ -17,6 +18,7 @@ export class NotificationScheduler {
                     await this.sendDailyRemind();
                 } catch (error) {
                     console.error('[Scheduler] sendDailyRemind 실행 중 에러:', error);
+                    // Scheduler 에러는 로깅만 하고 계속 실행
                 }
             });
 
@@ -43,7 +45,7 @@ export class NotificationScheduler {
 
             if (questions === null) {
                 console.log('[Scheduler] 질문 파일 로드 실패');
-                return;
+                throw new S3UrlGenerationError('S3에서 질문 파일을 로드할 수 없습니다.');
             }
             console.log(`[Scheduler] 오늘의 질문 로드 완료 (day: ${dayOfMonth}):`, questions);
 
@@ -63,6 +65,11 @@ export class NotificationScheduler {
                 }
             }
 
+            if (allTokens.length === 0) {
+                console.log('[Scheduler] 전송할 FCM 토큰이 없습니다.');
+                return;
+            }
+
             // 배치 알림 전송
             const notification = {
                 title: '📹 오늘의 하루를 기록해보세요 📹',
@@ -73,6 +80,15 @@ export class NotificationScheduler {
             console.log(`[Scheduler] sendDailyRemind 완료`);
         } catch (error) {
             console.error('[Scheduler] sendDailyRemind 에러:', error);
+
+            if (error instanceof DatabaseError) {
+                console.error('[Scheduler] 데이터베이스 에러로 알림 전송 실패');
+            } else if (error instanceof FcmSendError) {
+                console.error('[Scheduler] FCM 알림 전송 실패');
+            } else if (error instanceof S3UrlGenerationError) {
+                console.error('[Scheduler] S3 질문 파일 로드 실패');
+            }
+
             throw error;
         }
     }
