@@ -7,5 +7,5 @@ services:
       RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: '-rabbitmq_management path_prefix "/mq"'
 
   harufilm-api-server:
-    image: ${CI_REGISTRY_IMAGE}/api-server:latest
+    image: git.ajou.ac.kr:5050/today-my-diary/backend/api-server:latest
     restart: always
