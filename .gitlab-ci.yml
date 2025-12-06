@@ -12,6 +12,7 @@ build-api:
   script:
     - echo "Logging into GitLab Registry..."
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - cp $FIREBASE_JSON_FILE ./api-server/haru-film-firebase.json
 
     - echo "Building Docker Image..."
     - docker build -t $DOCKER_IMAGE -f ./api-server/Dockerfile ./api-server
