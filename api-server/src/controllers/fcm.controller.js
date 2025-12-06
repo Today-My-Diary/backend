@@ -1,3 +1,5 @@
+import { FcmTokenError } from '../errors/CustomError.js';
+
 export class FcmController {
     constructor(fcmBusiness) {
         this.fcmBusiness = fcmBusiness;
@@ -7,7 +9,7 @@ export class FcmController {
     registerToken = async (req, res, next) => {
         try {
             if (!req.body || !req.body.fcmToken) {
-                return res.status(400).json({ error: 'fcmToken is required' });
+                throw new FcmTokenError('FCM 토큰이 필요합니다.');
             }
             const { fcmToken } = req.body;
             await this.fcmBusiness.registerToken(req.user.userId, fcmToken);
