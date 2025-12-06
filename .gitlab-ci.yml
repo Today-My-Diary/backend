@@ -5,6 +5,8 @@ stages:
 variables:
   DOCKER_IMAGE: $CI_REGISTRY_IMAGE/api-server:latest
   DEPLOY_DIR: "/home/ubuntu/harufilm-be"
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: tcp://docker:2375
 
 build-api:
   stage: build
@@ -61,7 +63,7 @@ deploy-to-ec2:
       docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d &&
 
       echo 'Cleaning up unused images...' &&
-      docker image prune -f"
+      docker image prune -af"
 
     - echo "Deployment Complete!"
 
