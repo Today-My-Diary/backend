@@ -1,8 +1,22 @@
+import { CustomError } from '../errors/CustomError.js';
+
 export const errorHandler = (err, req, res, next) => {
     console.error(err.stack);
 
-    // 추후 CustomError 클래스로 관리
-    res.status(err.status || 500).json({
-        message: err.message || 'Internal Server Error',
+    // CustomError
+    if (err instanceof CustomError) {
+        return res.status(err.statusCode).json({
+            success: false,
+            errorCode: err.errorCode,
+            message: err.message,
+        });
+    }
+
+    return res.status(500).json({
+        success: false,
+        errorCode: 'INTERNAL_SERVER_ERROR',
+        message: process.env.NODE_ENV === 'production'
+            ? '서버 내부 오류가 발생했습니다.'
+            : err.message,
     });
 }

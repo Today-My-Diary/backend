@@ -1,3 +1,5 @@
+import { InvalidRefreshTokenError } from '../errors/CustomError.js';
+
 export class AuthBusiness {
 
     constructor(authService, userService, tokenService, fcmService) {
@@ -22,7 +24,7 @@ export class AuthBusiness {
     async reissueAccessToken(refreshToken) {
         const payload = this.tokenService.verifyRefreshToken(refreshToken);
         if (!payload || !payload.userId) {
-            throw new Error('유효하지 않거나 만료된 리프레시 토큰입니다.');
+            throw new InvalidRefreshTokenError('유효하지 않거나 만료된 리프레시 토큰입니다.');
         }
 
         const user = await this.userService.findUserById(payload.userId);

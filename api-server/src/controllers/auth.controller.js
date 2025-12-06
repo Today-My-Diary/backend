@@ -1,3 +1,5 @@
+import { InvalidRefreshTokenError } from '../errors/CustomError.js';
+
 export class AuthController {
     constructor(authBusiness) {
         this.authBusiness = authBusiness;
@@ -45,14 +47,14 @@ export class AuthController {
         try {
             const { refreshToken } = req.cookies;
             if (!refreshToken) {
-                return res.status(401).json({ message: '리프레시 토큰이 없습니다.' });
+                throw new InvalidRefreshTokenError('리프레시 토큰이 없습니다.');
             }
 
             const accessToken = await this.authBusiness.reissueAccessToken(refreshToken);
             res.status(200).json({ accessToken });
 
         } catch (error) {
-            return res.status(401).json({ message: error.message });
+            next(error);
         }
     }
 

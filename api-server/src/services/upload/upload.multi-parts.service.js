@@ -1,3 +1,5 @@
+import { UploadCompletionError } from '../../errors/CustomError.js';
+
 export class UploadMultiPartsService {
 
     constructor(s3Service, videoRepository, rabbitMQProducerService) {
@@ -73,7 +75,7 @@ export class UploadMultiPartsService {
                 console.error(`[CRITICAL] 썸네일 롤백 실패: ${thumbnailS3Key}`, deleteError);
             }
 
-            throw new Error("업로드 완료 처리에 실패했습니다.");
+            throw new UploadCompletionError("업로드 완료 처리에 실패했습니다.");
         }
     }
 }
