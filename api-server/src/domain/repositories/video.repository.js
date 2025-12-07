@@ -136,8 +136,8 @@ export class VideoRepository {
                 return [];
             }
 
-            // Timestamps 병렬 조회 (Promise.all)
-            const videosWithTimestamps = await Promise.all(
+            // Timestamps 병렬 조회 (Promise.allSettled)
+            const settledResults = await Promise.allSettled(
                 rows.map(async (video) => {
                     const timestamps = await this.prisma.timestamp.findMany({
                         where: { videoId: video.videoId },
@@ -153,6 +153,18 @@ export class VideoRepository {
                     };
                 })
             );
+
+            // 성공한 결과만 필터링
+            const videosWithTimestamps = settledResults
+                .filter(result => result.status === 'fulfilled')
+                .map(result => result.value);
+
+            // 실패한 경우 로깅 (모니터링)
+            settledResults
+                .filter(result => result.status === 'rejected')
+                .forEach(result => {
+                    console.error('Timestamp 조회 실패:', result.reason);
+                });
 
             return videosWithTimestamps;
         } catch (error) {

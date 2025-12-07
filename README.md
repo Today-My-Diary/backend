@@ -184,37 +184,30 @@ sequenceDiagram
     participant APIServer as API Server
     participant S3 as AWS S3
     
-    Client->>Client: 1. 파일 선택
-    Client->>Client: 2. 파일을 Chunk으로 분할<br/>(예: 5MB씩)
-    
-    Client->>APIServer: 3. POST /uploads/multi-parts/initiate<br/>(파일명, 전체 크기, 청크 수)
+    Client->>Client: 1. 파일을 5MB 청크로 분할
+    Client->>APIServer: 2. POST /uploads/multi-parts/initiate
+    APIServer->>S3: 3. CreateMultipartUpload
     APIServer-->>Client: 4. uploadId 반환
-    Client->>Browser: 5. uploadId, 청크 인덱스 저장<br/>(localStorage)
+    Client->>Browser: 5. 진행 상태 저장
     
-    loop 각 청크별 업로드 (병렬 처리 가능)
-        Client->>APIServer: 6. GET /uploads/multi-parts/part<br/>(uploadId, 청크 번호)
-        APIServer-->>Client: 7. Presigned URL 반환
+    loop 각 청크별 업로드
+        Client->>APIServer: 6. GET /uploads/multi-parts/part
+        APIServer-->>Client: 7. Presigned URL
+        Client->>S3: 8. PUT (직접 업로드)
         
-        Client->>S3: 8. PUT (Presigned URL로)<br/>청크 업로드
-        
-        alt 업로드 성공
+        alt 성공
             S3-->>Client: 9. 200 OK
-            Client->>Browser: 10. 완료된 청크 인덱스 업데이트<br/>(localStorage)
+            Client->>Browser: 10. 완료 청크 기록
         else 네트워크 단절
-            S3--xClient: 11. 네트워크 에러
-            Client->>Browser: 12. 실패한 청크 정보 유지<br/>(localStorage)
-            Note over Client: 재연결 대기...
-            Client->>Client: 13. 재연결 감지 시<br/>미완료 청크부터 재개
+            Note over Client: 재연결 대기
+            Client->>Client: 11. 미완료 청크부터 재개
         end
     end
     
-    Client->>APIServer: 14. POST /uploads/multi-parts/complete<br/>(uploadId)
-    APIServer->>APIServer: 15. 모든 청크 검증
-    APIServer->>S3: 16. 청크들을 하나의 파일로 병합<br/>(Complete Multipart Upload)
-    APIServer->>DB: 17. Video 레코드 생성 (PENDING)
-    APIServer->>RabbitMQ: 18. 인코딩 작업 발행
-    APIServer-->>Client: 19. 업로드 완료
-    Client->>Browser: 20. localStorage 정리
+    Client->>APIServer: 12. POST /uploads/multi-parts/complete
+    APIServer->>S3: 13. CompleteMultipartUpload
+    APIServer->>DB: 14. Video 레코드 생성
+    APIServer->>RabbitMQ: 15. 인코딩 작업 발행
 ```
 </details>
 
@@ -235,35 +228,30 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant Client as 클라이언트
-    participant APIServer as API Server
+    participant API as API Server
+    participant MQ as RabbitMQ
+    participant Encoder as Encoding Server
     participant S3 as AWS S3
-    participant RabbitMQ as RabbitMQ
-    participant EncodingServer as Encoding Server
-    participant DB as MySQL DB
-    participant Firebase as Firebase FCM
+    participant DB as MySQL
+    participant FCM as Firebase FCM
     
-    Client->>APIServer: POST /uploads/multi-parts/initiate
-    APIServer->>APIServer: Presigned URL 생성
-    APIServer-->>Client: uploadId + URLs
+    Client->>API: 1. 업로드 완료 요청
+    API->>DB: 2. Video 레코드 생성 (PENDING)
+    API->>MQ: 3. 인코딩 작업 발행
+    API->>FCM: 4. 업로드 완료 알림
+    API-->>Client: 5. 즉시 응답
     
-    Client->>S3: 파일 업로드 (Presigned URL)
-    Client->>APIServer: POST /uploads/multi-parts/complete
-    APIServer->>DB: Video 레코드 생성 (PENDING)
-    APIServer->>RabbitMQ: 인코딩 작업 메시지 발행
-    APIServer->>Firebase: 푸시 알림 발송
-    APIServer-->>Client: 업로드 완료
-    Firebase-->>Client: 알림 수신
+    MQ->>Encoder: 6. 메시지 소비
+    Encoder->>S3: 7. 원본 영상 다운로드
+    Encoder->>Encoder: 8. FFmpeg 인코딩<br/>(360p/720p/1080p)
+    Encoder->>S3: 9. HLS 파일 업로드
+    Encoder->>Encoder: 10. 임시 파일 삭제
+    Encoder->>MQ: 11. 완료 메시지 발행
     
-    RabbitMQ->>EncodingServer: 메시지 소비
-    EncodingServer->>S3: 비디오 다운로드
-    EncodingServer->>EncodingServer: FFmpeg 인코딩
-    EncodingServer->>S3: 인코딩된 파일 업로드
-    EncodingServer->>RabbitMQ: 인코딩 완료 메시지 발행
-    
-    RabbitMQ->>APIServer: 완료 메시지
-    APIServer->>DB: Video 상태 변경 (COMPLETE)
-    APIServer->>Firebase: 푸시 알림 발송
-    Firebase-->>Client: 알림 수신
+    MQ->>API: 12. 완료 메시지 소비
+    API->>DB: 13. Video 상태 변경 (COMPLETE)
+    API->>FCM: 14. 인코딩 완료 알림
+    FCM-->>Client: 15. 푸시 알림 수신
 ```
 
 </details>
@@ -280,14 +268,13 @@ sequenceDiagram
 <details>
 <summary><h3>5. 과거 영상 랜덤 조회 쿼리 최적화</h3></summary>
 
-하루 필름 서비스는 당일의 영상이 존재시에, 과거 영상을 3개를 랜덤으로 추출합니다.
+> 하루 필름 서비스는 당일 영상이 존재할 때, 과거 영상 3개를 랜덤으로 추출하여 "추억 회고" 기능을 제공합니다.
 
-> `VideoRepository.findRandomPastVideos()` 에서 과거 영상 3개를 조회시의 문제를 개선했습니다.
+### 🚨 문제 상황
 
-### ❌ 기존의 문제 상황
-- **2개 쿼리**: 모든 과거 영상 조회 → 다시 3개 조회
+- **2개 DB 쿼리**: 전체 조회 → 다시 3개 재조회
 - **메모리 낭비**: 모든 과거 영상을 배열로 로드 후 메모리에서 셔플
-- **불필요한 연산**: Fisher-Yates 셔플 알고리즘 (O(n))
+- **불필요한 연산**: 셔플 알고리즘 (O(n))
 
 ```javascript
 // 1️⃣ Query 1: 모든 과거 영상 ID 조회
@@ -306,26 +293,44 @@ const rows = await this.prisma.video.findMany({
 });
 ```
 
-###  ✅ 개선 내용
+# 🧠 해결 접근 방식
 
-이러한 문제를 **1개 SQL 쿼리 + 병렬 timestamps 조회**로 개선했습니다.
-- [x] SQL의 ORDER BY RAND() 활용
-- [x] 1개의 쿼리로 DB에서 직접 랜덤 정렬 + 3개만 반환
+## 1단계 : 쿼리 통합 (2개 → 1개)
 
-```javascript
+- SQL의 `ORDER BY RAND()`를 활용하여, 1개의 쿼리로 통합했습니다.
+- 1개의 쿼리로 DB에서 랜덤 정렬 후 3개만 반환합니다.
+
+```jsx
 // ✅ SQL의 ORDER BY RAND()
 const rows = await this.prisma.$queryRaw`
     SELECT videoId, uploadDate, thumbnailS3Url
     FROM Video
     WHERE userId = ${userIdBigInt}
-    AND uploadDate < ${todayDate}
-    AND status = 'COMPLETE'
-    AND s3Url IS NOT NULL
+		    AND uploadDate < ${todayDate}
+		    AND status = 'COMPLETE'
+		    AND s3Url IS NOT NULL
     ORDER BY RAND()
-    LIMIT ${limit}
-`;
+    LIMIT ${limit}`;
+```
 
-// ✅ Timestamps 병렬 조회 (Promise.all)
+### **⚠️ ORDER BY RAND()의** 개선 여지
+
+이벤트 성격의 단순 추첨 또는 임의의 사용자 조회 같은 기능을 SQL을 이용해 가장 **쉽고 단순하게 사용할 수 있는 방법이 ORDER BY RAND()이며, 완전한 랜덤성을 얻을 수 있기에, 위와 같이 쿼리를 구성**했습니다.
+
+하지만, ORDER BY RAND()는 RAND() 함수로 발생되는 임의의 값을 각 레코드별로 부여하고, 그 임의값으로 정렬을 수행합니다. 이를 이용한 임의 정렬이나 조회는 절대 인덱스를 이용할 수 없습니다.
+
+***“현재로서는 정렬해야 할 레코드가 적기에 문제가 되지 않지만, 확장성을 위해 추후 개선할 예정입니다.”***
+
+임의의 값을 별도의 칼럼으로 생성해 두고 그 칼럼에 인덱스를 생성하면 손쉽게 인덱스를 이용한 임의 정렬을 구현하도록 개선하거나, 기존의 방식(해당 유저의 id 추출 후 애플리케이션 단에서 랜덤 3개 선택, 이후 다시 DB에 영상 쿼리)에서 **랜덤 선택 알고리즘을 개선**하고자 합니다. 기존 랜덤 로직은 O(N)이었는데, O(3)로 줄일 수 있다고 생각합니다.
+
+## 2단계 : Timestamp 병렬 조회
+
+### 시도 1: `Promise.all()`
+
+- `Promise.all`을 사용하여 Timestamp를 병렬 조회합니다.
+
+```javascript
+// 문제점: 하나라도 실패하면 전체 실패
 const videosWithTimestamps = await Promise.all(
     rows.map(async (video) => {
         const timestamps = await this.prisma.timestamp.findMany({...});
@@ -333,6 +338,56 @@ const videosWithTimestamps = await Promise.all(
     })
 );
 ```
+
+`Promise.all([ promise1, promise2, … ])`의 경우, 배열로 받은 **모든 프로미스가 fulfill** 된 이후, 모든 프로미스의 반환 값을 배열에 넣어 반환합니다. 그런데 만약 배열에 있는 프로미스 중 **하나라도 reject가 호출**된다면, 성공한 프로미스 응답은 무시된채로 그냥 바로 catch로 빠져버리게 됩니다.
+
+> 즉, 3개 영상 중 1개의 timestamp 조회 실패 → 전체 API 실패
+
+### 시도 2: `Promise.allSettled()`
+
+```javascript
+// ✅ 개선: 부분 실패를 허용하여 사용자 경험 개선
+const settledResults = await Promise.allSettled(
+    videos.map(async (video) => {
+        const timestamps = await this.prisma.timestamp.findMany({...});
+        return { videoId, uploadDate, thumbnailS3Url, timestamps };
+    })
+);
+
+// [추가] 성공한 결과만 필터링
+const videosWithTimestamps = settledResults
+    .filter(result => result.status === 'fulfilled')
+    .map(result => result.value);
+
+// [추가] 실패한 경우 로깅 (모니터링)
+settledResults
+    .filter(result => result.status === 'rejected')
+    .forEach(result => {
+        console.error('Timestamp 조회 실패:', result.reason);
+    });
+```
+
+`Promise.allSettled([ promise1, promise2, … ])`는 여러 프로미스를 병렬적으로 처리하되, **하나의 프로미스가 실패해도 무조건 이행**합니다.
+
+배열로 받은 모든 프로미스의 fulfilled, reject 여부와 상관없이, **전부 완료만 되었다면(not pending)** 해당 프로미스들의 결과를 배열로 리턴합니다.
+
+> **정리**
+`Promise.all` 사용으로 인해, 일부 영상의 timestamp 누락 시 전체 API 실패 → `Promise.allSettled`로 변경하여 가용성 향상
+
+### 👍 성과
+
+SQL의 `ORDER BY RAND()`를 활용하여, 1개의 쿼리로 통합
+
+- 구현의 단순함 + 완전한 랜덤성 보장
+- **성능 한계 :** 전체 테이블 스캔 발생 (인덱스 미사용)
+
+**안정성 개선**: `Promise.all` → `Promise.allSettled`로 부분 실패 허용
+
+- 부분 실패 시에도 사용자에게 유용한 데이터 제공
+- 모든 프로미스가 완료될 때까지 대기 (성공/실패 무관)
+- **성공한 결과는 반환, 실패는 로깅**
+- **부분 실패 허용**: 3개 중 2개 성공 시 2개라도 반환
+- **사용자 경험 개선: 일부 데이터라도 보여줍니다.**
 
 </details>
 
@@ -363,27 +418,9 @@ const videosWithTimestamps = await Promise.all(
     - **스케줄러:** 매일 20시에 `Video` 테이블 조회 후 없는 사람만 필터링하여 일괄 전송
     - **비동기 처리:** 업로드/인코딩은 작업이 끝나는 시점에 해당 사용자의 토큰을 찾아 즉시 전송, **이는 API 응답에 영향을 주지 않는 비동기 작업으로 처리**
 
-#### 알림 전송 Flow
+#### 알림 전송
 
-```mermaid
-sequenceDiagram
-    participant Client as 클라이언트
-    participant API as API Server
-    participant DB as MySQL
-    participant Scheduler as Scheduler
-    participant FCM as Firebase FCM
-
-    Scheduler->>DB: 1. 인코딩 완료된 영상 조회
-    DB-->>Scheduler: 2. 영상 데이터
-
-    Scheduler->>DB: 3. FCM 토큰 조회
-    DB-->>Scheduler: 4. 토큰 반환
-
-    Scheduler->>FCM: 5. 알림 전송
-    FCM-->>Scheduler: 6. 전송 완료
-
-    FCM->>Client: 7. 푸시 알림 도착
-```
+![fcm](./assets/fcm.png)
 
 </details>
 
@@ -395,6 +432,27 @@ sequenceDiagram
 - 500개 토큰 배치 처리를 통해 알림을 나눠서 전송하기에, 사용자 수나 디바이스 수가 많아도 알림 기능을 지원 가능합니다.
 - 모든 동작 추적하기 위해, 상세하게 로깅을 진행했습니다.
 - 모든 등록 기기에 푸시 알림이 전송되며, 무효화된 토큰을 자동으로 삭제하여 관리합니다.
+
+#### 알림 전송 flow
+
+```mermaid
+sequenceDiagram
+participant Client as 클라이언트
+participant API as API Server
+participant DB as MySQL
+participant Scheduler as Node-Schedule
+participant FCM as Firebase FCM
+
+    Note over Scheduler: 매일 20시 실행
+    Scheduler->>DB: 1. 오늘 영상 없는 사용자 조회<br/>(Token JOIN)
+    DB-->>Scheduler: 2. 사용자 + 토큰 리스트
+    
+    Scheduler->>FCM: 3. 배치 전송 (500개씩)
+    FCM-->>Scheduler: 4. 전송 결과
+    Scheduler->>DB: 5. 무효 토큰 삭제
+    
+    FCM->>Client: 6. 푸시 알림 도착
+```
 
 </details>
 
